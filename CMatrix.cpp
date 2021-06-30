@@ -24,14 +24,10 @@ namespace SunshineFrame {
 			}
 			if (bNegaApp == false)//shape有负项不会为其搭载内存，同时map也不会有项目
 			{
+				//m_ptrData = std::shared_ptr<MatrixDataType[]>(new MatrixDataType[m_nTotalSize]);
+				//m_ptrData = std::shared_ptr<MatrixDataType[]>(new MatrixDataType[m_nTotalSize]);
 				m_ptrData = std::shared_ptr<MatrixDataType[]>(new MatrixDataType[m_nTotalSize]);
-
-
-				for (int i = 0; i < m_nTotalSize; ++i)
-				{
-					 m_ptrData[i] = 0;
-					//((double*)m_ptrData)[i] = 0;
-				}
+				//memset(m_ptrData.get(), 0, sizeof(MatrixDataType) * m_nTotalSize);
 				if (nullptr == m_ptrData) { cerr << "Not enough memory" << endl; return; };
 			}
 			m_listShape = shape;
@@ -797,7 +793,21 @@ namespace SunshineFrame {
 			CalAxisCarry();
 		}
 	
-		int CMatrix::matSizefrompos(const CMatrix & enter, std::list<int> & pos)
+		int CMatrix::matSizefrompos(const CMatrix & enter, const std::vector<int> & pos)
+		{	
+			assert(enter.m_mapAxisCarryOver.size() == pos.size() && enter.m_ndim == pos.size());
+			if (pos.size() == 0) { return 0; }
+			int final = 0;
+			int index = 0;
+			auto test = enter.m_mapAxisCarryOver;
+			for (auto test_pos = pos.rbegin(); test_pos != pos.rend(); ++test_pos)
+			{
+				assert(index >= 0);
+				final += (test[index++] * (*test_pos));		
+			}
+			return std::move(final);
+		}
+		int CMatrix::matSizefrompos(const CMatrix & enter, const std::list<int> & pos)
 		{	
 			assert(enter.m_mapAxisCarryOver.size() == pos.size() && enter.m_ndim == pos.size());
 			if (pos.size() == 0) { return 0; }
@@ -810,7 +820,7 @@ namespace SunshineFrame {
 				assert(index >= 0);
 				final += (test[index++] * (*test_pos));		
 			}
-			return final;
+			return std::move(final);
 		}
 
 		
@@ -832,6 +842,24 @@ namespace SunshineFrame {
 			}
 			return pos;
 		}
+		void CMatrix::setData(const std::list<int>& pos, const MatrixDataType& data) {
+			int offset = matSizefrompos(*this, pos);
+			*(m_ptrData.get() + offset) = data;
+		}
+		void CMatrix::setData(const std::vector<int>& pos, const MatrixDataType& data) {
+			int offset = matSizefrompos(*this, pos);
+			*(m_ptrData.get() + offset) = data;
+		}
+		MatrixDataType CMatrix::getData(const std::vector<int>& pos) const{
+			int offset = matSizefrompos(*this, pos);
+			return	*(m_ptrData.get() + offset);
+		}
+
+		MatrixDataType CMatrix::getData(const std::list<int>& pos) const{
+			int offset = matSizefrompos(*this, pos);
+			return	*(m_ptrData.get() + offset);
+		}
+
 
 		CMatrix CMatrix::linspace(const double& from, const double& to, const int& counts)
 		{

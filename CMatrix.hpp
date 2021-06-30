@@ -54,6 +54,10 @@ namespace SunshineFrame {
 			inline std::list<int> shape() const{ return m_listShape; };
 			inline std::map<int, int> getAxisCarryOver() const{ return m_mapAxisCarryOver; };
 			void print()const;//展示自身内部数据
+			void setData(const std::vector<int>& pos, const MatrixDataType& data);
+			void setData(const std::list<int>& pos, const MatrixDataType& data);
+			MatrixDataType getData(const std::list<int>& pos)const;
+			MatrixDataType getData(const std::vector<int>& pos)const;
 
 		public:
 			inline void CalAxisCarry();//m_mapAxisCaryyOver计算参数
@@ -102,7 +106,9 @@ namespace SunshineFrame {
 			//size:开辟空间的第几个元素
 			static std::list<int> matPosfromsize(const CMatrix& enter, const int& size);
 			//根据pos 指示的位置返回内存距离首地址的偏移量: eg: pos=(1,2)  在3*3 的矩阵中将会返回5
-			static int matSizefrompos(const CMatrix& enter, std::list<int>& pos);
+			static int matSizefrompos(const CMatrix& enter, const std::list<int>& pos);
+			//根据pos 指示的位置返回内存距离首地址的偏移量: eg: pos=(1,2)  在3*3 的矩阵中将会返回5
+			static int matSizefrompos(const CMatrix& enter, const std::vector<int>& pos);
 			/* 取均值操作
 			* 对axis对应的轴号取进行取均值的操作
 			* keepdim:输出保持与输入enter同纬度,否则遇到1则会进行坍缩ex: (5,1,3) ==> (5,3)

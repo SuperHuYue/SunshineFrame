@@ -9,6 +9,7 @@ namespace SunshineFrame {
 		//每增加一个layerType记得同步
 		enum class LayerType {
 			FullyConnect,
+			Conv,
 			Relu,
 			LossLayer,
 			Undefined
@@ -23,6 +24,9 @@ namespace SunshineFrame {
 			else if(!in.compare("relu"))
 			{
 				return LayerType::Relu;
+			}
+			else if (!in.compare("conv")) {
+				return LayerType::Conv;
 			}
 			else if (!in.compare("undefined")) 
 			{
@@ -47,6 +51,9 @@ namespace SunshineFrame {
 				break;
 			case LayerType::Undefined:
 				retName = "undefined";
+				break;
+			case LayerType::Conv:
+				retName = "conv";
 				break;
 			default:
 				throw std::runtime_error(" layerType2Str Err: default type...");
@@ -266,8 +273,8 @@ namespace SunshineFrame {
 			 损失函数ID号
 			*/
 			int m_iLossID;
-			std::list<std::shared_ptr<SunshineBaseLayer>>m_frontConnectLayer;//前向连接层,用于连接前面的层
-			std::list<std::shared_ptr<SunshineBaseLayer>>m_BackConnectLayer;//后向连接层，用于连接后续的层
+			 std::list<std::shared_ptr<SunshineBaseLayer>>m_frontConnectLayer;//前向连接层,用于连接前面的层
+			 std::list<std::shared_ptr<SunshineBaseLayer>>m_BackConnectLayer;//后向连接层，用于连接后续的层
 			Algebra::MatrixDataType m_layerLearningRate;//层学习率，用于指导整层的学习率
 		private:
 			/*

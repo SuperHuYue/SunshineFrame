@@ -28,11 +28,11 @@ namespace SunshineFrame {
 					*/
 			};
 			~FullyConnectLayer(){};
-			void weightMatFeed(std::list<Algebra::MatrixDataType> data)
+			void weightMatFeed( std::list<Algebra::MatrixDataType> data)
 			{
 				m_weightMat.matrixFeed(data);
 			}
-			void biasMatFeed(std::list<Algebra::MatrixDataType> data)
+			void biasMatFeed( std::list<Algebra::MatrixDataType> data)
 			{
 				m_biasMat.matrixFeed(data);
 			}

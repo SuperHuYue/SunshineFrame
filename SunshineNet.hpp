@@ -70,7 +70,7 @@ namespace SunshineFrame {
 
 
 		//为网络添加全连接层
-		std::shared_ptr<Layer::SunshineBaseLayer> addFullyConnectedLayer(std::list<std::shared_ptr<Layer::SunshineBaseLayer>>frontBlockIn,const Layer::FullyConnectLayer& fullyConnectIn) {
+		std::shared_ptr<Layer::SunshineBaseLayer> addFullyConnectedLayer( std::list<std::shared_ptr<Layer::SunshineBaseLayer>>frontBlockIn,const Layer::FullyConnectLayer& fullyConnectIn) {
 			auto fullyConnectForSharePtr = std::make_shared<Layer::FullyConnectLayer>(fullyConnectIn);
 			_addLayer(frontBlockIn, fullyConnectForSharePtr);
 			return fullyConnectForSharePtr;
@@ -80,6 +80,19 @@ namespace SunshineFrame {
 			auto fullyConnectForSharePtr = std::make_shared<Layer::FullyConnectLayer>(fullyConnect);
 			_addLayer(fullyConnectForSharePtr);
 			return fullyConnectForSharePtr;
+		}
+
+		//为网络添加conv2d layer
+		std::shared_ptr<Layer::SunshineBaseLayer> addConv2DLayer( std::list<std::shared_ptr<Layer::SunshineBaseLayer>>frontBlockIn,const Layer::ConvLayer2D& blockIn) {
+			auto conv2DForSharePtr = std::make_shared<Layer::ConvLayer2D>(blockIn);
+			_addLayer(frontBlockIn, conv2DForSharePtr);
+			return conv2DForSharePtr;
+		}
+		//为网络添加全连接层
+		std::shared_ptr<Layer::SunshineBaseLayer> addConv2DLayer(const Layer::ConvLayer2D& conv2D) {
+			auto conv2DForSharePtr = std::make_shared<Layer::ConvLayer2D>(conv2D);
+			_addLayer(conv2DForSharePtr);
+			return conv2DForSharePtr;
 		}
 
 
@@ -172,7 +185,7 @@ namespace SunshineFrame {
 		//	m_bInit = init;
 		//}
 	private:
-		void _addLayer(std::list<std::shared_ptr<Layer::SunshineBaseLayer>>frontBlockIn, std::shared_ptr<Layer::SunshineBaseLayer> addBlock) {
+		void _addLayer( std::list<std::shared_ptr<Layer::SunshineBaseLayer>>frontBlockIn, std::shared_ptr<Layer::SunshineBaseLayer> addBlock) {
 			int deepest = -9999;
 			for (auto i : frontBlockIn) {
 				i->m_BackConnectLayer.push_back(addBlock);
