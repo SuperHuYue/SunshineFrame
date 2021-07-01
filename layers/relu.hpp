@@ -18,6 +18,7 @@ namespace SunshineFrame
 			~ReluLayer(){};
 
 		private:
+
 			/*
 				函数会主动像前向的节点的front2back索要数据
 				*/

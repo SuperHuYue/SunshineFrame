@@ -14,12 +14,20 @@ namespace SunshineFrame {
 		Sunshine():m_bInit(true),m_lossIdValid(0){};
 		~Sunshine() {
 		}
+
+		std::shared_ptr<Layer::SunshineBaseLayer> getLossLayer(const int& id) {
+			if (m_lossLayer.find(id) == m_lossLayer.end())return nullptr;
+			return m_lossLayer[id];
+		}
+
+
+
 		void frameShowAllData() {
 			for (auto i : m_layer) {
 				for (auto j : i.second) {
-					//std::cout << "alisa:  " << j->alias2String() <<"\n";
+					std::cout << "alisa:  " << j->alias2String() << "user_name:"<< j->m_usrAlias << "\n";
 					j->showWeight();
-					j->getFront2BackMat().print();
+					//j->getFront2BackMat().print();
 					//j->getBack2FrontMat().print();
 				}
 				std::cout << "---------------------------------\n";
@@ -99,12 +107,12 @@ namespace SunshineFrame {
 		/*为网络添加损失层
 		return value:损失层指示id号，用于在训练过程中给入对应的id的结论数据
 		*/
-		int AddLossLayer(std::shared_ptr<Layer::SunshineBaseLayer> specifiedLayer,const Layer::LossLayerType& lossType = Layer::LossLayerType::MSE) {
+		int AddLossLayer(std::shared_ptr<Layer::SunshineBaseLayer> specifiedLayer,const Layer::LossLayerType& lossType = Layer::LossLayerType::MSE, const std::string& userAlisa= "undefined") {
 			std::shared_ptr<Layer::SunshineBaseLayer> lossLayerPtr = nullptr;
 			switch (lossType)
 			{
 			case Layer::LossLayerType::MSE:
-				lossLayerPtr = std::make_shared<Layer::MseLossLayer>();
+				lossLayerPtr = std::make_shared<Layer::MseLossLayer>(true,false,userAlisa);
 			default:
 				break;
 			}
@@ -115,8 +123,8 @@ namespace SunshineFrame {
 			return lossLayerPtr->m_iLossID;
 
 		}
-		std::shared_ptr<Layer::SunshineBaseLayer> AddReluLayer(std::shared_ptr<Layer::SunshineBaseLayer>specifiedLayer) {
-			auto relu = std::make_shared<Layer::ReluLayer>();
+		std::shared_ptr<Layer::SunshineBaseLayer> AddReluLayer(std::shared_ptr<Layer::SunshineBaseLayer>specifiedLayer, const std::string& user_alias) {
+			auto relu = std::make_shared<Layer::ReluLayer>(true, false, user_alias);
 			_addLayer({ specifiedLayer }, relu);
 			return relu;
 		}
@@ -277,8 +285,7 @@ namespace SunshineFrame {
 				}
 			}
 		}
-
-
+	
 
 	private:
 		/*所有层信息

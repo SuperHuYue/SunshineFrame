@@ -30,7 +30,7 @@ namespace SunshineFrame {
 			*
 			*/
 			CMatrix() :CMatrix({ 1,1 }) {};
-			CMatrix(std::list<int> shape);
+			CMatrix(const std::list<int>& shape);
 			~CMatrix();
 			CMatrix(const CMatrix& cpy);
 			CMatrix& operator=(const CMatrix& rhs);

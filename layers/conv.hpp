@@ -144,47 +144,53 @@ namespace SunshineFrame {
 				std::vector<Algebra::MatrixDataType> cacheData(expandMatShapeCol, 0);
 				cacheData.reserve(expandMatShapeCol);
 				int feedInFloorSize = vecfeedInShape[1] * vecfeedInShape[0];
-				int cacheDataIdx = 0;
+				//int cacheDataIdx = 0;
 				int nowOutFeedInIdx = 0;
-				bool jumpOut = false;
+			/*	bool jumpOut = false;
 				bool edgeAlarm = false;
-				bool cacheInitOk = false;
-				for (int feedInRow = 0; feedInRow < vecfeedInShape[1]; feedInRow += m_step.first) {
-					if (jumpOut)break;
-					edgeAlarm = false;
-					for (int feedInCol = 0; feedInCol < vecfeedInShape[0]; feedInCol += m_step.second) {
-						cacheDataIdx = 0;
+				bool cacheInitOk = false;*/
+				for (int feedInRow = 0; feedInRow < vecfeedInShape[1] - kernelShape[1] + 1; feedInRow += m_step.first) {
+					//if (jumpOut)break;
+					//edgeAlarm = false;
+					for (int feedInCol = 0; feedInCol < vecfeedInShape[0] - kernelShape[0] + 1; feedInCol += m_step.second) {
+						//cacheDataIdx = 0;
 						for (int kd = 0; kd < kernelShape[2]; ++kd) {
 							for (int kr = 0; kr < kernelShape[1]; ++kr) {
-								//边界检查
-								if (feedInRow + kr >= vecfeedInShape[1]) {
-									jumpOut = true;
-									edgeAlarm = true;
-									break;
-								}
+								////边界检查
+								//if (feedInRow + kr >= vecfeedInShape[1]) {
+								//	goto LoopOut;
+								//	//jumpOut = true;
+								//	//edgeAlarm = true;
+								//	break;
+								//}
 								for (int kc = 0; kc < kernelShape[0]; ++kc) {
-									//边界检查
-									if (feedInCol + kc >= vecfeedInShape[0]) {
-										edgeAlarm = true;
-										break;
-									}
-									const auto& data = feedInMatDataPtr[kd * feedInFloorSize + (feedInRow + kr) * vecfeedInShape[0] + (feedInCol + kc)];
-									cacheData[cacheDataIdx++] = data;
+									////边界检查
+									//if (feedInCol + kc >= vecfeedInShape[0]) {
+									//	//edgeAlarm = true;
+									//	goto edge_jump;
+									//	//break;
+									//}
+									const auto& data = feedInMatDataPtr[size_t(kd * feedInFloorSize + (feedInRow + kr) * vecfeedInShape[0] + (feedInCol + kc))];
+									//cacheData[cacheDataIdx++] = data;
+									retMatDataPtr[nowOutFeedInIdx++] = data;
 
 								}
-								if (edgeAlarm)break;
+								//if (edgeAlarm)break;
 							}
-							if (edgeAlarm)break;
+							//if (edgeAlarm)break;
 						}
-						if (edgeAlarm)break;
+						//if (edgeAlarm)break;
 						//边界检查通过
-						if (cacheData.size() != expandMatShapeCol)throw std::runtime_error("cacheData.size() != expandMatShapeRow-- " + m_usrAlias);
+					/*	if (cacheData.size() != expandMatShapeCol)throw std::runtime_error("cacheData.size() != expandMatShapeRow-- " + m_usrAlias);
 						for (const auto& i : cacheData) {
 							retMatDataPtr[nowOutFeedInIdx++] = i;
-						}
+						}*/
+				/*	edge_jump:
+						;*/
 					}
 				}
-				return retMat;
+			//LoopOut:
+				return std::move(retMat);
 			}
 
 			/*

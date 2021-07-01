@@ -37,7 +37,7 @@ namespace SunshineFrame {
 				m_front2backMat = Algebra::CMatrix::mean(out, 1);
 				m_front2backMat = Algebra::CMatrix::mean(m_front2backMat, 0); //最后的损失函数
 				//std::cout << "now loss is : \n";
-				m_front2backMat.print();
+				//m_front2backMat.print();
 				return;
 			};
 			void backwardMove() override

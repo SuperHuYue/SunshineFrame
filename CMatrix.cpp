@@ -9,16 +9,14 @@ namespace SunshineFrame {
 	namespace Algebra {
 		using namespace std;
 		double const pi = 4 * std::atan(1.0);
-		CMatrix::CMatrix(std::list<int> shape):
+		CMatrix::CMatrix(const std::list<int>& shape):
 			 m_ptrData(nullptr)
 		{
 			m_ndim = shape.size();
-			int ncount = 0;
 			m_nTotalSize = 1;
 			bool bNegaApp = false;
-			for (auto i = shape.begin(); i != shape.end(); i++)
+			for (auto i = shape.cbegin(); i != shape.cend(); ++i)
 			{
-				ncount++;
 				if (*i < 0)bNegaApp = true;
 				m_nTotalSize *= (*i);
 			}

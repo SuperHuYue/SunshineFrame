@@ -105,6 +105,8 @@ namespace SunshineFrame {
 			const char ENDCHAR = ']';
 		public:
 			SunshineBaseLayer(const LayerType& type, const double& learnRate = 0.01, std::string user_alias = "undefined", bool activate = true, bool freeze = false) {
+				m_front2backMat.zeros();
+				m_back2frontMat.zeros();
 				m_layerType = type;
 				m_lossLayerType = LossLayerType::Undefined;
 				m_frontConnectLayer.clear();
@@ -143,7 +145,11 @@ namespace SunshineFrame {
 
 			}
 			virtual void showWeight() {
-				std::cout << "alisa:  " << alias2String() << " user_alias: " << m_usrAlias << "\n";
+				std::cout << "f2b: \n";
+				m_front2backMat.print();
+				std::cout << "b2f: \n";
+				m_back2frontMat.print();
+				//std::cout << "alisa:  " << alias2String() << " user_alias: " << m_usrAlias << "\n";
 				return;
 			}
 			/*
