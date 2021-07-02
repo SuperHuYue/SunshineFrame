@@ -190,7 +190,9 @@ namespace SunshineFrame {
 			} while (true);
 		}
 
-
+		/*
+		将in中的1 brocast到shape中的维度
+		*/
 		CMatrix CMatrix::genMatByBroadcastRule(const CMatrix& in, const std::list<int>& shape) {
 			CMatrix tmp_In = in;
 			std::list<int>inShape = tmp_In.m_listShape;
@@ -204,18 +206,35 @@ namespace SunshineFrame {
 			tmp_In.reshape(inShape);
 			std::vector<int>vecInShape{ inShape.begin(), inShape.end() };
 			CMatrix outMat(shape);
-			auto inShapeItr = vecInShape.begin();
-			auto outShapeItr = shape.begin();
+			auto inShapeItr = vecInShape.rbegin();
+			auto outShapeItr = shape.rbegin();
 			int stepSize = 1;
 			auto inMatDataPtr = tmp_In.getdataptr();
 			auto outMatDataPtr = outMat.getdataptr();
-			std::vector<int>targetInPos;
+		/*	std::vector<int>targetInPos;
 			std::vector<int>notEqualVec;
 			std::vector<int>notEqualVecJumpSize;
 			int notEqualIdx = 0;
 			for (; inShapeItr != vecInShape.end(); ++inShapeItr, ++outShapeItr, ++notEqualIdx) {
-				if (*inShapeItr != *outShapeItr)notEqualVec.push_back(notEqualIdx);
+				if (*inShapeItr != *outShapeItr) {
+					notEqualVec.push_back(notEqualIdx);
+					notEqualVecJumpSize.push_back(*outShapeItr);
+				}
 			}
+			for (auto i : notEqualVec) {
+
+			}*/
+			int axis = 0;
+			for (; inShapeItr != vecInShape.rend(); ++inShapeItr, ++outShapeItr, ++axis) {
+				if (inShapeItr == outShapeItr) {
+					//直接拷贝
+				}
+				else {
+					// 不等采用
+				}
+			}
+
+
 
 
 
