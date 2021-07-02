@@ -11,10 +11,22 @@ TEST(CMATRIX, broadCast) {
 	SunshineFrame::Algebra::CMatrix b({ 3,1,2,1,3 });
 	 std::list<int> out_shape;
 	 std::list<int >b_tmp = { 3,2,2,5,3 };
-	EXPECT_TRUE(SunshineFrame::Algebra::CMatrix::broadcastRule(a, b, out_shape));
+	EXPECT_TRUE(SunshineFrame::Algebra::CMatrix::broadcastRule(a.shape(), b.shape(), out_shape));
 	EXPECT_TRUE(std::equal(out_shape.begin(), out_shape.end(), b_tmp.begin(),b_tmp.end()));
 
 }
+
+TEST(CMATRIX, matmul) {
+	SunshineFrame::Algebra::CMatrix a({5,4 });
+	a.matrixFeed({ 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20 });
+	SunshineFrame::Algebra::CMatrix b({ 4,3,4,1 });
+	for (int i = 1; i <= 48; ++i) {
+		b.getdataptr()[i - 1] = i;
+	}
+	auto c = SunshineFrame::Algebra::CMatrix::matmul(a, b);
+	c.print();
+}
+
 //save para test
 TEST(LAYERTEST, fc)
 {
@@ -83,24 +95,23 @@ TEST(LAYERTEST, fc)
 	};
 	EXPECT_TRUE(fc());
 }
-
+//
 TEST(LAYERTEST, conv_geneOutShape) {
 	SunshineFrame::Layer::ConvLayer2D a(2 ,{3,3,3});
-	auto out = a.geneOutShape({ 3,7,7 }, {2,2});
-	 std::list<int> right{ 3,3 };
+	auto out = a.geneOutShape({1,3,7,7 }, {2,2});
+	 std::list<int> right{1,2, 3,3 };
 	EXPECT_TRUE(std::equal(out.begin(), out.end(), right.begin(),right.end()));
-
 	SunshineFrame::Layer::ConvLayer2D b(1, {5,3,3});
-	out = b.geneOutShape({ 5,10,10 }, { 2,1 });
-	right = { 4,8 };
+	out = b.geneOutShape({ 1,5,10,10 }, { 2,1 });
+	right = {1,1, 4,8 };
 	EXPECT_TRUE(std::equal(out.begin(), out.end(), right.begin(), right.end()));
 
 	//
 
 }
 TEST(LAYERTEST, conv_matrixExpand) {
-	SunshineFrame::Layer::ConvLayer2D a(1, { 2,2,3 }, "noPadding", {2,1});
-	SunshineFrame::Algebra::CMatrix feedIn({2,4,5});
+	SunshineFrame::Layer::ConvLayer2D a(1, {2,2,3 }, "noPadding", {2,1});
+	SunshineFrame::Algebra::CMatrix feedIn({1,2,4,5});
 	 std::list<SunshineFrame::Algebra::MatrixDataType>feedInlist;
 	for (int i = 1; i <= 40; ++i) {
 		feedInlist.push_back(i);
@@ -112,23 +123,23 @@ TEST(LAYERTEST, conv_matrixExpand) {
 	right.matrixFeed(std::list<SunshineFrame::Algebra::MatrixDataType>{1, 2, 3, 6, 7, 8, 21, 22, 23, 26, 27, 28, 2, 3, 4, 7, 8, 9, 22, 23, 24, 27, 28, 29, 3, 4, 5, 8, 9, 10, 23, 24, 25, 28, 29, 30, 11, 12, 13, 16, 17, 18, 31, 32, 33, 36, 37, 38, 12, 13, 14, 17, 18, 19, 32, 33, 34, 37, 38, 39, 13, 14, 15, 18, 19, 20, 33, 34, 35, 38, 39, 40});
 	EXPECT_EQ(expand, right);
 }
-TEST(LAYERTEST, conv_forwardTest) {
-	//std::list<SunshineFrame::Algebra::MatrixDataType>feedInlist(1024 * 768 * 3, 0);
-	//std::list<SunshineFrame::Algebra::MatrixDataType>feedInlist;
-	//for (int i = 1; i <= 1024 * 768 * 3; ++i) {
-	//	feedInlist.push_back(i);
-	//}
-	//feedIn.matrixFeed(feedInlist);
-	//a.weightMatFeed({ 1,1,1,1,1,1,2,2,2,2,2,2 });A
 
+
+TEST(LAYERTEST, conv_forwardTest) {
+	//SunshineFrame::Sunshine frame;
+	//SunshineFrame::Layer::ConvLayer2D a(2, {2,2,2 }, "noPadding", { 1,1 });
+	//a.weightMatFeed({ 10,11,12,13,14,15,16,17 });
+	//SunshineFrame::Algebra::CMatrix feedIn({ 1,2, 2, 3 });
+	//feedIn.matrixFeed({ 1,2,3,4,5,6,7,8,9,10,11,12 });
+	//auto a_itr = frame.addConv2DLayer(a);
+	//frame.predict(feedIn);
+	//auto data = a_itr->getFront2BackMat();
+
+	//data.print();
 	SunshineFrame::Sunshine frame;
 	SunshineFrame::Layer::ConvLayer2D a(1, { 3,5,4 }, "noPadding", { 1,1 });
-	SunshineFrame::Algebra::CMatrix feedIn({ 3,1024,768 });
-
+	SunshineFrame::Algebra::CMatrix feedIn({1,3,1024,768 });
 	auto a_itr = frame.addConv2DLayer(a);
-
 	frame.predict(feedIn);
-	//auto data = a_itr->getFront2BackMat();
-	//data.print();
 }
 

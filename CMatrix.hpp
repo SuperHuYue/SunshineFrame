@@ -6,6 +6,14 @@
 #include <list>
 #include <map>
 namespace SunshineFrame {
+	template<typename T>
+	std::vector<T> list2Vec(const std::list<T>& in) {
+		std::vector<T>out;
+		for(auto i : in){
+			out.push_back(i);
+		}
+		return std::move(out);
+	}
 	namespace Algebra{
 		/*
 		* 本matrix内存结构 ex（5，3，4）---5深，3行 4列
@@ -30,7 +38,10 @@ namespace SunshineFrame {
 			*
 			*/
 			CMatrix() :CMatrix({ 1,1 }) {};
+			CMatrix::CMatrix(const std::initializer_list<int>::iterator begin, const std::initializer_list<int>::iterator end);
 			CMatrix(const std::list<int>& shape);
+			CMatrix(const std::vector<int>& shape);
+			CMatrix(const std::initializer_list<int>& shape);
 			~CMatrix();
 			CMatrix(const CMatrix& cpy);
 			CMatrix& operator=(const CMatrix& rhs);
@@ -52,6 +63,10 @@ namespace SunshineFrame {
 
 			bool reshape(std::list<int>shape);
 			inline std::list<int> shape() const{ return m_listShape; };
+			inline std::vector<int> vecShape() const{
+				std::vector<int> ret{ m_listShape.begin(),m_listShape.end() };
+				return std::move(ret);
+			};
 			inline std::map<int, int> getAxisCarryOver() const{ return m_mapAxisCarryOver; };
 			void print()const;//展示自身内部数据
 			void setData(const std::vector<int>& pos, const MatrixDataType& data);
@@ -87,11 +102,11 @@ namespace SunshineFrame {
 			             2. 两个数组存在一些维度大小不相等时，有一个数组的该不相等维度大小为1
 			broadcast rule:判定广播规则是否满足
 			*bool:true符合广播规则。false 不符合广播规则
-			*lhs:左边操作矩阵
-			*rhs：右边操作矩阵
+			*lhs:左操作shape
+			*rhs：右操作shape
 			*out_size：在返回值为true的情况下应该输出的尺寸
 			*/
-			static bool broadcastRule(const CMatrix& lhs, const CMatrix& rhs, std::list<int>& out_shape);
+			static bool broadcastRule(const std::list<int>& lhs, const std::list<int>& rhs, std::list<int>& out_shape);
 
 			/*
 			依据broadcastRule生成的尺寸对输入（in）的矩阵进行broadcast
@@ -116,6 +131,7 @@ namespace SunshineFrame {
 			static CMatrix mean(const CMatrix& enter, const int& axis, const bool& keepdim = true);
 
 		private:
+			inline void constructHelper(const std::list<int>& shape);
 			void easy_changeshape(std::list<int> shape);//change shape and the m_ndim 
 			bool cekIdxOk(std::list<int>pos);//check index reasonable
 			std::list<int> m_listShape;//矩阵的尺寸,需通过reshape更改

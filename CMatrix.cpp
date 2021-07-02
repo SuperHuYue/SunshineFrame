@@ -9,13 +9,33 @@ namespace SunshineFrame {
 	namespace Algebra {
 		using namespace std;
 		double const pi = 4 * std::atan(1.0);
-		CMatrix::CMatrix(const std::list<int>& shape):
-			 m_ptrData(nullptr)
-		{
+		CMatrix::CMatrix(const std::initializer_list<int>& shape){
+			std::list<int>listShape;
+			for (auto i : shape) {
+				listShape.push_back(i);
+			}
+			constructHelper(listShape);
+		}
+		CMatrix::CMatrix(const std::vector<int>& shape) {
+			std::list<int>listShape;
+			for (auto i : shape) {
+				listShape.push_back(i);
+			}
+			constructHelper(listShape);
+		}
+		CMatrix::CMatrix(const std::list<int>& shape){
+			std::list<int>listShape;
+			for (auto i : shape) {
+				listShape.push_back(i);
+			}
+			constructHelper(listShape);
+		}
+		void CMatrix::constructHelper(const std::list<int>& shape) {
+			m_ptrData = nullptr;
 			m_ndim = shape.size();
 			m_nTotalSize = 1;
 			bool bNegaApp = false;
-			for (auto i = shape.cbegin(); i != shape.cend(); ++i)
+			for (auto i = shape.begin(); i != shape.end(); ++i)
 			{
 				if (*i < 0)bNegaApp = true;
 				m_nTotalSize *= (*i);
@@ -42,9 +62,9 @@ namespace SunshineFrame {
 
 		void CMatrix::CalAxisCarry()
 		{
+			m_mapAxisCarryOver.clear();
 			if (m_nTotalSize < 0)
 			{
-				m_mapAxisCarryOver.clear();
 				cout << "Size尚不确定，跳过CalAxisCarry部分,同时尺寸清零..." << endl;
 				return;
 			}
@@ -135,31 +155,31 @@ namespace SunshineFrame {
 		In order to broadcast, the size of the trailing axes for both arrays in an 
 		operation must either be the same size or one of them must be one.
 		*/
-		bool CMatrix::broadcastRule(const CMatrix& lhs, const CMatrix& rhs,list<int>& out_shape)
+		bool CMatrix::broadcastRule(const std::list<int>& lhs, const std::list<int>& rhs,list<int>& out_shape)
 		{
 			out_shape.clear();
-			auto it_lhs = lhs.m_listShape.rbegin();
-			auto it_rhs = rhs.m_listShape.rbegin();
+			auto it_lhs = lhs.rbegin();
+			auto it_rhs = rhs.rbegin();
 			do
 			{
-				if (it_lhs != lhs.m_listShape.rend() && it_rhs != rhs.m_listShape.rend())
+				if (it_lhs != lhs.rend() && it_rhs != rhs.rend())
 				{
 					if (*it_lhs > *it_rhs && 1 == *it_rhs) { out_shape.push_front(*it_lhs); it_lhs++; it_rhs++; continue; }
 					if (*it_lhs < *it_rhs && 1 == *it_lhs) { out_shape.push_front(*it_rhs); it_lhs++; it_rhs++; continue; }
 					if (*it_lhs == *it_rhs) { out_shape.push_front(*it_lhs); it_lhs++; it_rhs++; continue; };
 					return false;
 				}
-				if (it_lhs == lhs.m_listShape.rend())
+				if (it_lhs == lhs.rend())
 				{
-					for (;it_rhs != rhs.m_listShape.rend(); it_rhs++)
+					for (;it_rhs != rhs.rend(); it_rhs++)
 					{
 						out_shape.push_front(*it_rhs);
 					}
 					return true;
 				}
-				if (it_rhs == rhs.m_listShape.rend())
+				if (it_rhs == rhs.rend())
 				{
-					for (; it_lhs != lhs.m_listShape.rend(); it_lhs++)
+					for (; it_lhs != lhs.rend(); it_lhs++)
 					{
 						out_shape.push_front(*it_lhs);
 					}
@@ -172,73 +192,117 @@ namespace SunshineFrame {
 
 
 		CMatrix CMatrix::genMatByBroadcastRule(const CMatrix& in, const std::list<int>& shape) {
-			//检查size
-			int finalDim = shape.size();
-			int nowDim = in.m_listShape.size();
-			if (finalDim < nowDim)throw std::runtime_error("Err:genMatByBroadcastRule shut down, check broadcastRule, function have bugs... ");
-			auto expandFunc = [](const CMatrix& in, const std::list<int>& shape)->SunshineFrame::Algebra::CMatrix {
-				//此函数为同维度下将shape为1的部分
-				std::function<void(const CMatrix&, const std::list<int>&)>f;
-				CMatrix finalMat;
-				f = [&](const CMatrix& it, const std::list<int>& shape)->void{
-					auto tmpShape = it.shape();
-					if (tmpShape.size() != shape.size())throw std::runtime_error("Err:expandFunc shut down bugs in genMayByBroacastRule, please check...");
-					auto itr_it = tmpShape.rbegin();
-					int higestAxis = shape.size() - 1;
-					int nowAxis = 0;
-					CMatrix sinChangeOut;
-					bool finish = true;
-					for (auto itr_final = shape.rbegin(); itr_final != shape.rend(); ++itr_final,++itr_it, ++nowAxis) {
-						if (*itr_it != *itr_final && *itr_it == 1) {
-							auto needCopyObj = change_axis(it, nowAxis, higestAxis);
-							auto tmp = needCopyObj.shape();
-							if (tmp.front() != 1)throw std::runtime_error("Err:expandFunc shut down bugs in change_axis, please check...");
-							tmp.pop_front();
-							tmp.push_front(*itr_final);
-							CMatrix target(tmp);
-							for (int i = 0; i < *itr_final; ++i) {
-								memcpy(target.getdataptr().get() + i * needCopyObj.gettotalsize(), needCopyObj.getdataptr().get(), needCopyObj.gettotalsize() * sizeof(MatrixDataType));
-							}
-							target = change_axis(target, higestAxis, nowAxis);
-							sinChangeOut = target;
-							finish = false;
-							break;
-						}
-					}
-					if (finish) {
-						finalMat = it;
-						return;
-					}
-					f(sinChangeOut, shape);
-					return;
-				};
-
-				f(in, shape);
-				return finalMat;
-			};
-			if (finalDim != nowDim) 
-			{
-				//拷贝成维度相等内容
-				int needCopySize = in.gettotalsize();
-				int needCopyTimes = 1;
-				std::list<int>tmp_shape = in.m_listShape;
-				int count = 1;
-				for (auto itr = shape.rbegin(); itr != shape.rend(); ++itr,++count) {
-					if (count <= nowDim)continue;
-					tmp_shape.push_front(*itr);
-					needCopyTimes *= *itr;
+			CMatrix tmp_In = in;
+			std::list<int>inShape = tmp_In.m_listShape;
+			std::vector<int>vecFinalShape{shape.begin(), shape.end()};
+			if (inShape.size() != vecFinalShape.size()) {
+				int addDim = vecFinalShape.size() - inShape.size();
+				for (int i = 0; i < addDim; ++i) {
+					inShape.push_front(1);
 				}
-				CMatrix tmp(tmp_shape);
-				for (int i = 0; i < needCopyTimes; ++i) {
-					memcpy(tmp.getdataptr().get() + (size_t)i * needCopySize, in.getdataptr().get(), needCopySize * sizeof(MatrixDataType));
-				}
-				return expandFunc(tmp, shape);
 			}
-			else 
-			{
-				return expandFunc(in, shape);
+			tmp_In.reshape(inShape);
+			std::vector<int>vecInShape{ inShape.begin(), inShape.end() };
+			CMatrix outMat(shape);
+			auto inShapeItr = vecInShape.begin();
+			auto outShapeItr = shape.begin();
+			int stepSize = 1;
+			auto inMatDataPtr = tmp_In.getdataptr();
+			auto outMatDataPtr = outMat.getdataptr();
+			std::vector<int>targetInPos;
+			std::vector<int>notEqualVec;
+			std::vector<int>notEqualVecJumpSize;
+			int notEqualIdx = 0;
+			for (; inShapeItr != vecInShape.end(); ++inShapeItr, ++outShapeItr, ++notEqualIdx) {
+				if (*inShapeItr != *outShapeItr)notEqualVec.push_back(notEqualIdx);
+			}
 
+
+
+
+			//此方式速度奇慢
+		/*	int offset = 0;
+			for (int i = 0; i < outMat.m_nTotalSize; ++i) {
+				auto vecPos = list2Vec(Algebra::CMatrix::matPosfromsize(outMat,i));
+				for (auto j : notEqualVec) {
+					vecPos[j] = 0;
+				}
+				offset = Algebra::CMatrix::matSizefrompos(tmp_In, vecPos);
+				outMatDataPtr[i] = inMatDataPtr[offset];
 			}
+			return std::move(outMat);*/
+
+
+
+
+
+			////检查size
+			//int finalDim = shape.size();
+			//int nowDim = in.m_listShape.size();
+			//if (finalDim < nowDim)throw std::runtime_error("Err:genMatByBroadcastRule shut down, check broadcastRule, function have bugs... ");
+			//auto expandFunc = [](const CMatrix& in, const std::list<int>& shape)->SunshineFrame::Algebra::CMatrix {
+			//	//此函数为同维度下将shape为1的部分
+			//	std::function<void(const CMatrix&, const std::list<int>&)>f;
+			//	CMatrix finalMat;
+			//	f = [&](const CMatrix& it, const std::list<int>& shape)->void{
+			//		auto tmpShape = it.shape();
+			//		if (tmpShape.size() != shape.size())throw std::runtime_error("Err:expandFunc shut down bugs in genMayByBroacastRule, please check...");
+			//		auto itr_it = tmpShape.rbegin();
+			//		int higestAxis = shape.size() - 1;
+			//		int nowAxis = 0;
+			//		CMatrix sinChangeOut;
+			//		bool finish = true;
+			//		for (auto itr_final = shape.rbegin(); itr_final != shape.rend(); ++itr_final,++itr_it, ++nowAxis) {
+			//			if (*itr_it != *itr_final && *itr_it == 1) {
+			//				auto needCopyObj = change_axis(it, nowAxis, higestAxis);
+			//				auto tmp = needCopyObj.shape();
+			//				if (tmp.front() != 1)throw std::runtime_error("Err:expandFunc shut down bugs in change_axis, please check...");
+			//				tmp.pop_front();
+			//				tmp.push_front(*itr_final);
+			//				CMatrix target(tmp);
+			//				for (int i = 0; i < *itr_final; ++i) {
+			//					memcpy(target.getdataptr().get() + i * needCopyObj.gettotalsize(), needCopyObj.getdataptr().get(), needCopyObj.gettotalsize() * sizeof(MatrixDataType));
+			//				}
+			//				target = change_axis(target, higestAxis, nowAxis);
+			//				sinChangeOut = target;
+			//				finish = false;
+			//				break;
+			//			}
+			//		}
+			//		if (finish) {
+			//			finalMat = it;
+			//			return;
+			//		}
+			//		f(sinChangeOut, shape);
+			//		return;
+			//	};
+
+			//	f(in, shape);
+			//	return finalMat;
+			//};
+			//if (finalDim != nowDim) 
+			//{
+			//	//拷贝成维度相等内容
+			//	int needCopySize = in.gettotalsize();
+			//	int needCopyTimes = 1;
+			//	std::list<int>tmp_shape = in.m_listShape;
+			//	int count = 1;
+			//	for (auto itr = shape.rbegin(); itr != shape.rend(); ++itr,++count) {
+			//		if (count <= nowDim)continue;
+			//		tmp_shape.push_front(*itr);
+			//		needCopyTimes *= *itr;
+			//	}
+			//	CMatrix tmp(tmp_shape);
+			//	for (int i = 0; i < needCopyTimes; ++i) {
+			//		memcpy(tmp.getdataptr().get() + (size_t)i * needCopySize, in.getdataptr().get(), needCopySize * sizeof(MatrixDataType));
+			//	}
+			//	return expandFunc(tmp, shape);
+			//}
+			//else 
+			//{
+			//	return expandFunc(in, shape);
+
+			//}
 		}
 		CMatrix CMatrix::ones(list<int> shape)
 		{
@@ -374,7 +438,7 @@ namespace SunshineFrame {
 		CMatrix CMatrix::operator+(const CMatrix & rhs)
 		{	
 			std::list<int> out_shape;
-			bool ok = CMatrix::broadcastRule(*this, rhs, out_shape);
+			bool ok = CMatrix::broadcastRule((*this).m_listShape, rhs.m_listShape, out_shape);
 			CMatrix tmpThis = *this;
 			CMatrix tmpRhs = rhs;
 			if (ok) {
@@ -411,7 +475,7 @@ namespace SunshineFrame {
 		}
 		bool CMatrix::operator==(const CMatrix& rhs) const{
 			std::list<int> out_shape;
-			bool ok = CMatrix::broadcastRule(*this, rhs, out_shape);
+			bool ok = CMatrix::broadcastRule((*this).m_listShape, rhs.m_listShape, out_shape);
 			CMatrix tmpThis = *this;
 			CMatrix tmpRhs = rhs;
 			if (ok) {
@@ -433,7 +497,7 @@ namespace SunshineFrame {
 		CMatrix CMatrix::operator*(const CMatrix & rhs)const
 		{
 			std::list<int> out_shape;
-			bool ok = CMatrix::broadcastRule(*this, rhs, out_shape);
+			bool ok = CMatrix::broadcastRule((*this).m_listShape, rhs.m_listShape, out_shape);
 			CMatrix tmpThis = *this;
 			CMatrix tmpRhs = rhs;
 			if (ok) {
@@ -503,95 +567,161 @@ namespace SunshineFrame {
 
 		/*
 		*高维向量乘法运算：高于二维的维度，挨个遍历，便可得到一个二维矩阵，对这两个二维矩阵进行线性代数里的矩阵乘法
-		*因此，对于高于二维的维度每一个都必须相同，遍历出来的二维矩阵需要满足向量乘法法则
+		*因此，对于高于二维的维度每一个都必须相同(或者没或者1)，遍历出来的二维矩阵需要满足向量乘法法则
 		*/
 		CMatrix CMatrix::matmul(const CMatrix& lhs, const CMatrix& rhs)
 		{
+			std::vector<int>lhs_shape{ lhs.m_listShape.begin(), lhs.m_listShape.end() };
+			std::vector<int>rhs_shape{ rhs.m_listShape.begin(), rhs.m_listShape.end() };
+			int lhsShapeSize = lhs_shape.size();
+			int rhsShapeSize = rhs_shape.size();
+			if (lhsShapeSize == 1 || rhsShapeSize == 1)throw std::runtime_error("Err: matmul err reason dim can't be one...");
+			if (lhs_shape[lhsShapeSize - 1] != rhs_shape[rhsShapeSize - 2]) throw std::runtime_error("Err: matmul lhs ,rhs shape can't do matmul..");
+			//高于2的维度使用broadcast规则
+			int shapeMax = lhsShapeSize > rhsShapeSize ? lhsShapeSize : rhsShapeSize;
+			auto lhsOut = lhs;
+			auto rhsOut = rhs;
+			if (shapeMax > 2) {
+				std::list<int>tmpLhsShapeBC;
+				std::list<int>tmpRhsShapeBC;
+				for (int i = 0; i < lhsShapeSize - 2; ++i) {
+					tmpLhsShapeBC.push_back(lhs_shape[i]);
+				}
+				for (int i = 0; i < rhsShapeSize - 2; ++i) {
+					tmpRhsShapeBC.push_back(rhs_shape[i]);
+				}
+				std::list<int>finalShape;
+				if (!broadcastRule(tmpLhsShapeBC, tmpRhsShapeBC, finalShape)) {
+					throw std::runtime_error("Err: matmul can't do matmul in bc...");
+				}
+				std::list<int>lhsFinalShape = finalShape;
+				std::list<int>rhsFinalShape = finalShape;
+				lhsFinalShape.push_back(lhs_shape[lhsShapeSize - 2]);
+				lhsFinalShape.push_back(lhs_shape[lhsShapeSize - 1]);
+				rhsFinalShape.push_back(rhs_shape[rhsShapeSize - 2]);
+				rhsFinalShape.push_back(rhs_shape[rhsShapeSize - 1]);
+
+			//	finalShape.push_back(lhs_shape[lhsShapeSize - 2]);
+			//	finalShape.push_back(lhs_shape[rhsShapeSize - 1]);
+				lhsOut = genMatByBroadcastRule(lhs, lhsFinalShape);
+				rhsOut =genMatByBroadcastRule(rhs, rhsFinalShape);
+			}
+			////////////////////////////////////////////////////////////////////////////////
 			//高维支持
-			if (lhs.m_ndim != rhs.m_ndim || lhs.m_ndim <= 1) {
-				throw std::runtime_error("Err: matmul err reason dim not equal or less 2");
-			}
-			//检测是否满足相乘的条件
-			int count = lhs.m_listShape.size() - 1;
-			auto lhs_itr = lhs.m_listShape.begin();
-			auto rhs_itr = rhs.m_listShape.begin();
-			for (int i = count; i >= 2; --i) {
-				if (*lhs_itr != *rhs_itr) {
-					throw std::runtime_error("Err::matmul dim bigger than 3 not equal");
-				}
-				lhs_itr = std::next(lhs_itr);
-				rhs_itr = std::next(rhs_itr);
-			}
-			//last two dim check
-			lhs_itr = std::next(lhs_itr);
-			if (*lhs_itr != *rhs_itr) {
-				throw std::runtime_error("Err::matmul dim last 2 dim not fit");
-			}
-			//
-			int tep_count = 1;
-			int times = 1;//开辟内存倍数
-			int single_mul_size_out = 1;//单个矩阵乘法输出需要偏移的大小
-			int single_mul_size_rhs = 1;//单个矩阵乘法rhs需要偏移的大小
-			int single_mul_size_lhs = 1;//单个矩阵乘法lhs需要偏移的大小
-			list<int> out_shape;//eg:[6;7;4] * [6;4;5]====>[6;7;5]
-			auto it_rhs = rhs.m_listShape.rbegin();
-			int two_dim_row = 1;
-			int two_dim_col = 1;
-			for (auto it_lhs = lhs.m_listShape.rbegin(); it_lhs != lhs.m_listShape.rend(); ++it_lhs,++it_rhs,++tep_count)
-			{
-				if (tep_count == 1) { 
-					out_shape.push_front(*it_rhs);
-					two_dim_col = *it_rhs;
-					single_mul_size_out *= *it_rhs;
-					single_mul_size_lhs *= *it_lhs;
-					single_mul_size_rhs *= *it_rhs;
-				}
-				else if (tep_count == 2) {
-					out_shape.push_front(*it_lhs);
-					two_dim_row = *it_lhs;
-					single_mul_size_out *= *it_lhs;
-					single_mul_size_lhs *= *it_lhs;
-					single_mul_size_rhs *= *it_rhs;
-				}
-				else {
-					out_shape.push_front(*it_rhs);
-				}
-			}
-			times = lhs.m_nTotalSize / single_mul_size_lhs;
+			auto rhsVecShape =  rhsOut.vecShape();
+			auto lhsVecShape = lhsOut.vecShape();
+			int rhsVecRowIdx = rhsVecShape.size() - 2;
+			int rhsVecColIdx = rhsVecShape.size() - 1;
+			int lhsVecRowIdx = lhsVecShape.size() - 2;
+			int lhsvecColIdx = lhsVecShape.size() - 1;
 
-			CMatrix outMatrix(out_shape);
-			LONGLONG outtotalsize = outMatrix.gettotalsize();
-			LONGLONG lhstotalsize = lhs.gettotalsize();
-			LONGLONG rhstotalsize = rhs.gettotalsize();
-			auto ptr_out = outMatrix.getdataptr();
-			auto ptr_lhs = lhs.getdataptr();
-			auto ptr_rhs = rhs.getdataptr();
-
-			int feed_col = lhs.m_listShape.back();		
-			for (int i = 0; i < times; i++)
-			{
-				for (int index_row = 0; index_row < two_dim_row; ++index_row)
-				{
-					for (int index_col = 0; index_col < two_dim_col; index_col++)
-					{
-						//进行计算
-						MatrixDataType tep_total = 0;
-						assert(i * (size_t)single_mul_size_out + (size_t)index_row * outMatrix.m_listShape.back() + index_col < outtotalsize);//out越界控制
-						for (int j = 0; j < lhs.m_listShape.back(); ++j)
-						{
+			int times = 1;
+			int lhsFloorSize = lhsVecShape[lhsvecColIdx] * lhsVecShape[lhsVecRowIdx];
+			int lhsFloorOffset = 0;
+			int lhsRowSizeOffset = 0;
+			int rhsFloorSize = rhsVecShape[rhsVecColIdx] * rhsVecShape[rhsVecRowIdx];
+			int rhsRowSizeOffset = 0;
+			int rhsFloorOffset = 0;
+			std::list<int>outShape;
+			for (int i = 0; i < lhsVecShape.size() - 2; ++i) {
+				times *= lhsVecShape[i];
+				outShape.push_back(lhsVecShape[i]);
+			}
+			int outFloorSize = lhsVecShape[lhsVecRowIdx] * rhsVecShape[rhsVecColIdx];
+			outShape.push_back(lhsVecShape[lhsVecRowIdx]);
+			outShape.push_back(rhsVecShape[rhsVecColIdx]);
+			auto lhsDataPtr = lhsOut.getdataptr();
+			auto rhsDataPtr = rhsOut.getdataptr();
+			CMatrix outMat(outShape);
+			auto outMatDataPtr = outMat.getdataptr();
+			int count = 0;
+			int data = 0;
+			for (int i = 0; i < times; ++i) {
+				for (int or = 0; or < lhsVecShape[lhsVecRowIdx]; ++or ) {
+					for (int oc = 0; oc < rhsVecShape[rhsVecColIdx]; ++oc) {
+						data = 0;
+						for (int innerLoop = 0; innerLoop < lhsVecShape[lhsvecColIdx]; ++innerLoop) {
 							
-							assert(i * (size_t)single_mul_size_lhs + (size_t)index_row * lhs.m_listShape.back() + j < lhstotalsize);//lhs越界控制
-							assert(i * (size_t)single_mul_size_rhs + (size_t)j * rhs.m_listShape.back() + index_col < rhstotalsize);//rhs越界控制
-							tep_total +=
-								ptr_lhs[i * single_mul_size_lhs + (size_t)index_row * lhs.m_listShape.back() + j] *
-								ptr_rhs[i * single_mul_size_rhs + (size_t)j * rhs.m_listShape.back() + index_col];
+							int left_data_idx = i * lhsFloorSize + or *lhsVecShape[lhsvecColIdx] + innerLoop;
+							int right_data_idx = i * rhsFloorSize + oc + innerLoop * rhsVecShape[rhsVecColIdx];
+							data += lhsDataPtr[left_data_idx] * rhsDataPtr[right_data_idx];
 						}
-						ptr_out[i * single_mul_size_out + (size_t)index_row * outMatrix.m_listShape.back() + index_col] = tep_total;
+						outMatDataPtr[count++] = data;
 					}
-
 				}
 			}
-			return outMatrix;
+			return std::move(outMat);
+			
+
+
+			////////////////////////////////////////////////////////////////////////////////
+			//高维支持
+			//int tep_count = 1;
+			//int times = 1;//开辟内存倍数
+			//int single_mul_size_out = 1;//单个矩阵乘法输出需要偏移的大小
+			//int single_mul_size_rhs = 1;//单个矩阵乘法rhsOut需要偏移的大小
+			//int single_mul_size_lhs = 1;//单个矩阵乘法lhsOut需要偏移的大小
+			//list<int> out_shape;//eg:[6;7;4] * [6;4;5]====>[6;7;5]
+			//auto it_rhs = rhsOut.m_listShape.rbegin();
+			//int two_dim_row = 1;
+			//int two_dim_col = 1;
+			//for (auto it_lhs = lhsOut.m_listShape.rbegin(); it_lhs != lhsOut.m_listShape.rend(); ++it_lhs,++it_rhs,++tep_count)
+			//{
+			//	if (tep_count == 1) { 
+			//		out_shape.push_front(*it_rhs);
+			//		two_dim_col = *it_rhs;
+			//		single_mul_size_out *= *it_rhs;
+			//		single_mul_size_lhs *= *it_lhs;
+			//		single_mul_size_rhs *= *it_rhs;
+			//	}
+			//	else if (tep_count == 2) {
+			//		out_shape.push_front(*it_lhs);
+			//		two_dim_row = *it_lhs;
+			//		single_mul_size_out *= *it_lhs;
+			//		single_mul_size_lhs *= *it_lhs;
+			//		single_mul_size_rhs *= *it_rhs;
+			//	}
+			//	else {
+			//		out_shape.push_front(*it_rhs);
+			//	}
+			//}
+			//times = lhsOut.m_nTotalSize / single_mul_size_lhs;
+
+			//CMatrix outMatrix(out_shape);
+			//LONGLONG outtotalsize = outMatrix.gettotalsize();
+			//LONGLONG lhstotalsize = lhsOut.gettotalsize();
+			//LONGLONG rhstotalsize = rhsOut.gettotalsize();
+			//auto ptr_out = outMatrix.getdataptr();
+			//auto ptr_lhs = lhsOut.getdataptr();
+			//auto ptr_rhs = rhsOut.getdataptr();
+
+			//int feed_col = lhsOut.m_listShape.back();		
+			//for (int i = 0; i < times; i++)
+			//{
+			//	for (int index_row = 0; index_row < two_dim_row; ++index_row)
+			//	{
+			//		for (int index_col = 0; index_col < two_dim_col; index_col++)
+			//		{
+			//			//进行计算
+			//			MatrixDataType tep_total = 0;
+			//			assert(i * (size_t)single_mul_size_out + (size_t)index_row * outMatrix.m_listShape.back() + index_col < outtotalsize);//out越界控制
+			//			for (int j = 0; j < lhsOut.m_listShape.back(); ++j)
+			//			{
+			//				
+			//				assert(i * (size_t)single_mul_size_lhs + (size_t)index_row * lhsOut.m_listShape.back() + j < lhstotalsize);//lhsOut越界控制
+			//				assert(i * (size_t)single_mul_size_rhs + (size_t)j * rhsOut.m_listShape.back() + index_col < rhstotalsize);//rhsOut越界控制
+			//				Algebra::MatrixDataType a = ptr_lhs[i * single_mul_size_lhs + (size_t)index_row * lhsOut.m_listShape.back() + j];
+			//				Algebra::MatrixDataType b = ptr_rhs[i * single_mul_size_rhs + (size_t)j * rhsOut.m_listShape.back() + index_col];
+			//				tep_total +=
+			//					ptr_lhs[i * single_mul_size_lhs + (size_t)index_row * lhsOut.m_listShape.back() + j] *
+			//					ptr_rhs[i * single_mul_size_rhs + (size_t)j * rhsOut.m_listShape.back() + index_col];
+			//			}
+			//			ptr_out[i * single_mul_size_out + (size_t)index_row * outMatrix.m_listShape.back() + index_col] = tep_total;
+			//		}
+
+			//	}
+			//}
+			//return outMatrix;
 		}
 
 		/*
@@ -723,63 +853,82 @@ namespace SunshineFrame {
 
 		CMatrix CMatrix::change_axis(const CMatrix & enter, const int& from, const int& to)
 		{
-			//加速
-			if (from == to) {
-				return enter;
+			if (from == to) { return enter; };
+			int maxAxis = from > to ? from : to;
+			if (maxAxis > enter.m_ndim)throw std::runtime_error("change_Axis: axis bigger than enter dim..");
+			auto vecEnterShape = enter.vecShape();
+			int tmpCache = vecEnterShape[from];
+			vecEnterShape[from] = vecEnterShape[to];
+			vecEnterShape[to] = tmpCache;
+			Algebra::CMatrix outMat(vecEnterShape);
+			auto outMatDataPtr = outMat.getdataptr();
+			auto enterMatDataPtr = enter.getdataptr();
+			for (int i = 0; i < enter.m_nTotalSize; ++i) {
+				auto pos = list2Vec(matPosfromsize(enter, i));
+				tmpCache = pos[from];
+				pos[from] = pos[to];
+				pos[to] = tmpCache;
+				auto offset = matSizefrompos(outMat, pos);
+				outMatDataPtr[offset] = enterMatDataPtr[i];
 			}
-			int max_axis_num = enter.m_ndim - 1;
-			assert(max_axis_num >= from && max_axis_num >= to && from >= 0 && to >= 0);
-			list<int> enter_cache = enter.m_listShape;
-			{
-				int tep_count = 0;
-				int a_from = 0;
-				int b_to = 0;
-				auto a_idx = enter_cache.rbegin();
-				auto b_idx = enter_cache.rbegin();
-				for (auto it = enter_cache.rbegin(); it != enter_cache.rend(); ++it, ++tep_count)
-				{
-					if (tep_count == from) {
-						a_from = *it;
-						a_idx = it;
-					}
-					if (tep_count == to) {
-						b_to = *it;
-						b_idx = it;
-					}
-				}
-				*a_idx = b_to;
-				*b_idx = a_from;
-			}
-			CMatrix output(enter_cache);
+			return std::move(outMat);
+			////加速
+			//if (from == to) {
+			//	return enter;
+			//}
+			//int max_axis_num = enter.m_ndim - 1;
+			//assert(max_axis_num >= from && max_axis_num >= to && from >= 0 && to >= 0);
+			//list<int> enter_cache = enter.m_listShape;
+			//{
+			//	int tep_count = 0;
+			//	int a_from = 0;
+			//	int b_to = 0;
+			//	auto a_idx = enter_cache.rbegin();
+			//	auto b_idx = enter_cache.rbegin();
+			//	for (auto it = enter_cache.rbegin(); it != enter_cache.rend(); ++it, ++tep_count)
+			//	{
+			//		if (tep_count == from) {
+			//			a_from = *it;
+			//			a_idx = it;
+			//		}
+			//		if (tep_count == to) {
+			//			b_to = *it;
+			//			b_idx = it;
+			//		}
+			//	}
+			//	*a_idx = b_to;
+			//	*b_idx = a_from;
+			//}
+			//CMatrix output(enter_cache);
 
-			list<int> pos;
-			for (int i = 0; i < enter.m_nTotalSize; ++i)
-			{
-				list<int>tep_from = matPosfromsize(enter, i);
-				MatrixDataType ori_data = enter.m_ptrData[i];
-				int axis_count = 0;
-				int from_axis_data = 0;
-				int to_axis_data = 0;
-				auto it_from_idx = tep_from.rbegin();
-				auto it_to_idx = tep_from.rbegin();
-				for (auto it = tep_from.rbegin(); it != tep_from.rend(); ++it, ++axis_count)
-				{
-					if (axis_count == from) {
-						from_axis_data = *it;
-						it_from_idx = it;
-					}
-					if (axis_count == to) {
-						to_axis_data = *it;
-						it_to_idx = it;
-					}
-				}
-				*it_from_idx = to_axis_data;
-				*it_to_idx = from_axis_data;		
-				MatrixDataType* tar_pos_data = output.getPosDataPtr(tep_from);
-				*tar_pos_data = ori_data;
-			}
-			//output.reshape(enter_cache);
-			return output;
+			//list<int> pos;
+			//for (int i = 0; i < enter.m_nTotalSize; ++i)
+			//{
+			//	list<int>tep_from = matPosfromsize(enter, i);
+			//	MatrixDataType ori_data = enter.m_ptrData[i];
+			//	int axis_count = 0;
+			//	int from_axis_data = 0;
+			//	int to_axis_data = 0;
+			//	auto it_from_idx = tep_from.rbegin();
+			//	auto it_to_idx = tep_from.rbegin();
+			//	for (auto it = tep_from.rbegin(); it != tep_from.rend(); ++it, ++axis_count)
+			//	{
+			//		if (axis_count == from) {
+			//			from_axis_data = *it;
+			//			it_from_idx = it;
+			//		}
+			//		if (axis_count == to) {
+			//			to_axis_data = *it;
+			//			it_to_idx = it;
+			//		}
+			//	}
+			//	*it_from_idx = to_axis_data;
+			//	*it_to_idx = from_axis_data;		
+			//	MatrixDataType* tar_pos_data = output.getPosDataPtr(tep_from);
+			//	*tar_pos_data = ori_data;
+			//}
+			////output.reshape(enter_cache);
+			//return output;
 		}
 
 		void CMatrix::easy_changeshape(std::list<int> shape)
@@ -812,7 +961,6 @@ namespace SunshineFrame {
 			int final = 0;
 			int index = 0;
 			auto test = enter.m_mapAxisCarryOver;
-			//auto test_right = enter.m_listShape.begin();
 			for (auto test_pos = pos.rbegin(); test_pos != pos.rend(); ++test_pos)
 			{
 				assert(index >= 0);
@@ -820,8 +968,6 @@ namespace SunshineFrame {
 			}
 			return std::move(final);
 		}
-
-		
 
 
 		std::list<int> CMatrix::matPosfromsize(const CMatrix & enter, const int& size)
@@ -838,7 +984,7 @@ namespace SunshineFrame {
 					tep_size -= tep_index * map[i];
 				}
 			}
-			return pos;
+			return std::move(pos);
 		}
 		void CMatrix::setData(const std::list<int>& pos, const MatrixDataType& data) {
 			int offset = matSizefrompos(*this, pos);
