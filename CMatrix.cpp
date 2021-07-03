@@ -1,10 +1,11 @@
 #pragma once
 #include "CMatrix.hpp"
+#include <cmath>
 #include<iostream>
 #include <functional>
 #include <assert.h>
+#include <initializer_list>
 #include <iomanip>
-#include "CalTimePrecise.h"
 namespace SunshineFrame {
 	namespace Algebra {
 		using namespace std;
@@ -194,6 +195,63 @@ namespace SunshineFrame {
 		将in中的1 brocast到shape中的维度
 		*/
 		CMatrix CMatrix::genMatByBroadcastRule(const CMatrix& in, const std::list<int>& shape) {
+			// CMatrix tmp_In = in;
+			// std::list<int>inShape = tmp_In.m_listShape;
+			// std::vector<int>vecFinalShape{shape.begin(), shape.end()};
+			// if (inShape.size() != vecFinalShape.size()) {
+			// 	int addDim = vecFinalShape.size() - inShape.size();
+			// 	for (int i = 0; i < addDim; ++i) {
+			// 		inShape.push_front(1);
+			// 	}
+			// }
+			// tmp_In.reshape(inShape);
+			// std::vector<int>vecInShape{ inShape.begin(), inShape.end() };
+			// CMatrix outMat(shape);
+			// auto inShapeItr = vecInShape.rbegin();
+			// auto outShapeItr = shape.rbegin();
+			// int stepSize = 1;
+			// auto inMatDataPtr = tmp_In.getdataptr();
+			// auto outMatDataPtr = outMat.getdataptr();
+			/*
+			此函数一次检测并broadcast一维的数据，如进行了broadcast则返回<true，新输出>没有则返回<false, 原输入>（代表与finshape参数一致）
+			*/
+			auto funcExpandForSingleAxis = [](const CMatrix& feedInMat, const std::vector<int>& finalShape)->std::pair<bool,SunshineFrame::Algebra::CMatrix>{
+				auto feedInMatDataPtr = feedInMat.getdataptr();
+				auto inShape = feedInMat.vecShape()
+				auto outShape = inShape;
+				if(inShape.size() != finalShape.size())throw std::runtime_error("FuncExpandForSingleAxis: check shape not match...");
+				bool neHappend = false;
+				int inShapeSize = inShapeItr.size();
+
+				int loopSize = 1;
+				int times = 1;
+				for(int i = inShapeSize - 1; i >=0; --i){
+					if(!neHappend)loopSize*=inShape[i];
+					if(finalShape[i] != inShape[i] &&
+					   !neHappend){
+						   if(inShape[i] == 1){
+								neHappend = true;
+								outShape[i] = finalShape[i]
+								times = outShape[i]
+						   }else{
+							   throw std::runtime_error("funcExpandForsingleAxis err..., shape not equal and not one...")
+						   }
+					}
+				}
+				if(!neHappend)return std::make_pair(false, std::move(feedInMat));
+				Algebra::CMatrix out(outShape);
+				auto outMatDataPtr = out.getPosDataPtr();
+				int nCount = 0;
+				for(int i = 0; i < feedInMat.m_nTotalSize; i+= loopSize){
+					for(int sinLoop = 0; sinLoop < loopSize; sinLoop++){
+						for(int innerIdx = i; innerIdx < i + loopSize; ++i){
+							outMatDataPtr[nCount++] = feedInMat[innerIdx];
+						}
+					}
+				}
+				return std::make_pair(true, std::move(out));
+			};
+			//保持shape纬度相同
 			CMatrix tmp_In = in;
 			std::list<int>inShape = tmp_In.m_listShape;
 			std::vector<int>vecFinalShape{shape.begin(), shape.end()};
@@ -204,40 +262,16 @@ namespace SunshineFrame {
 				}
 			}
 			tmp_In.reshape(inShape);
-			std::vector<int>vecInShape{ inShape.begin(), inShape.end() };
-			CMatrix outMat(shape);
-			auto inShapeItr = vecInShape.rbegin();
-			auto outShapeItr = shape.rbegin();
-			int stepSize = 1;
-			auto inMatDataPtr = tmp_In.getdataptr();
-			auto outMatDataPtr = outMat.getdataptr();
-		/*	std::vector<int>targetInPos;
-			std::vector<int>notEqualVec;
-			std::vector<int>notEqualVecJumpSize;
-			int notEqualIdx = 0;
-			for (; inShapeItr != vecInShape.end(); ++inShapeItr, ++outShapeItr, ++notEqualIdx) {
-				if (*inShapeItr != *outShapeItr) {
-					notEqualVec.push_back(notEqualIdx);
-					notEqualVecJumpSize.push_back(*outShapeItr);
-				}
+			std::vector<int> in.vecShape();
+			std::vector<int>vecFinalShape{shape.begin(), shape.end()};
+			int loopCount = 0;
+			std::pair<bool,Algebra::CMatrix>out = funcExpandForSingleAxis(tmp_In,vecFinalShape);
+			while(true){
+				if(!out.first)break;
+				out  = funcExpandForSingleAxis(out, vecFinalShape);
+				if(loopCount++ >= vecFinalShape.size())throw std::runtime_error("Finite loop: something wrong in while funcexpandForSingleAxis...");
 			}
-			for (auto i : notEqualVec) {
-
-			}*/
-			int axis = 0;
-			for (; inShapeItr != vecInShape.rend(); ++inShapeItr, ++outShapeItr, ++axis) {
-				if (inShapeItr == outShapeItr) {
-					//直接拷贝
-				}
-				else {
-					// 不等采用
-				}
-			}
-
-
-
-
-
+			return out.second;
 
 			//此方式速度奇慢
 		/*	int offset = 0;

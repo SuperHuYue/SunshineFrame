@@ -4,6 +4,7 @@
 #include<assert.h>
 #include <vector>
 #include <list>
+#include<initializer_list>
 #include <map>
 namespace SunshineFrame {
 	template<typename T>
@@ -135,7 +136,7 @@ namespace SunshineFrame {
 			void easy_changeshape(std::list<int> shape);//change shape and the m_ndim 
 			bool cekIdxOk(std::list<int>pos);//check index reasonable
 			std::list<int> m_listShape;//矩阵的尺寸,需通过reshape更改
-			//轴进位map，第一个参数代表轴号，第二个参数代表必须跳过多少个数（非byte，应为我们这里都是MatrixDataType）才能到达该轴维度中的下一个元素，如果shape存在-1那么此参数不能使用同时map.size()将会为0
+			//轴进位map，第一个参数代表轴号，第二个参数代表必须跳过多少个数（非byte，应为我们这里都是MatrixDataType）才能到达该轴维度中的下一个元素
 			std::map<int, int>m_mapAxisCarryOver;
 		//	double* m_ptrData;//数据指针，可以通过getdataptr直接进行操作，需要谨慎
 			std::shared_ptr<MatrixDataType[]> m_ptrData;

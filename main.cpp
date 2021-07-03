@@ -2,7 +2,10 @@
 #include <memory>
 #include <list>
 #include <thread>
-#include <filesystem>
+#ifdef __win32
+	#include <filesystem>
+#else
+#endif
 #include "SunshineNet.hpp"
 #include "gtest/gtest.h"
 
