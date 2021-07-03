@@ -140,7 +140,7 @@ TEST(LAYERTEST, conv_forwardTest) {
 
 	//data.print();
 	SunshineFrame::Sunshine frame;
-	SunshineFrame::Layer::ConvLayer2D a(2, { 3,5,4 }, "noPadding", { 1,1 });
+	SunshineFrame::Layer::ConvLayer2D a(1, { 3,5,4 }, "noPadding", { 1,1 });
 	SunshineFrame::Algebra::CMatrix feedIn({1,3,1024,768 });
 	auto a_itr = frame.addConv2DLayer(a);
 	frame.predict(feedIn);

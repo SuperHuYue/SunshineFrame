@@ -244,9 +244,11 @@ namespace SunshineFrame {
 				int nCount = 0;
 				for(int i = 0; i < feedInMat.m_nTotalSize; i+= loopSize){
 					for(int sinLoop = 0; sinLoop <times; sinLoop++){
-						for(int innerIdx = i; innerIdx < i + loopSize; ++innerIdx){
+						memcpy(outMatDataPtr.get() + nCount, feedInMatDataPtr.get() + i, sizeof(Algebra::MatrixDataType) * loopSize);
+						nCount += loopSize;
+					/*	for(int innerIdx = i; innerIdx < i + loopSize; ++innerIdx){
 							outMatDataPtr[nCount++] = feedInMatDataPtr[innerIdx];
-						}
+						}*/
 					}
 				}
 				return std::make_pair(true, std::move(out));
@@ -694,7 +696,7 @@ namespace SunshineFrame {
 					for (int oc = 0; oc < rhsVecShape[rhsVecColIdx]; ++oc) {
 						data = 0;
 						for (int innerLoop = 0; innerLoop < lhsVecShape[lhsvecColIdx]; ++innerLoop) {
-							
+							//此处可以加速
 							int left_data_idx = i * lhsFloorSize + or *lhsVecShape[lhsvecColIdx] + innerLoop;
 							int right_data_idx = i * rhsFloorSize + oc + innerLoop * rhsVecShape[rhsVecColIdx];
 							data += lhsDataPtr[left_data_idx] * rhsDataPtr[right_data_idx];
