@@ -217,11 +217,11 @@ namespace SunshineFrame {
 			*/
 			auto funcExpandForSingleAxis = [](const CMatrix& feedInMat, const std::vector<int>& finalShape)->std::pair<bool,SunshineFrame::Algebra::CMatrix>{
 				auto feedInMatDataPtr = feedInMat.getdataptr();
-				auto inShape = feedInMat.vecShape()
+				auto inShape = feedInMat.vecShape();
 				auto outShape = inShape;
 				if(inShape.size() != finalShape.size())throw std::runtime_error("FuncExpandForSingleAxis: check shape not match...");
 				bool neHappend = false;
-				int inShapeSize = inShapeItr.size();
+				int inShapeSize = inShape.size();
 
 				int loopSize = 1;
 				int times = 1;
@@ -231,21 +231,21 @@ namespace SunshineFrame {
 					   !neHappend){
 						   if(inShape[i] == 1){
 								neHappend = true;
-								outShape[i] = finalShape[i]
-								times = outShape[i]
+								outShape[i] = finalShape[i];
+								times = outShape[i];
 						   }else{
-							   throw std::runtime_error("funcExpandForsingleAxis err..., shape not equal and not one...")
+							   throw std::runtime_error("funcExpandForsingleAxis err..., shape not equal and not one...");
 						   }
 					}
 				}
 				if(!neHappend)return std::make_pair(false, std::move(feedInMat));
 				Algebra::CMatrix out(outShape);
-				auto outMatDataPtr = out.getPosDataPtr();
+				auto outMatDataPtr = out.getdataptr();
 				int nCount = 0;
 				for(int i = 0; i < feedInMat.m_nTotalSize; i+= loopSize){
-					for(int sinLoop = 0; sinLoop < loopSize; sinLoop++){
-						for(int innerIdx = i; innerIdx < i + loopSize; ++i){
-							outMatDataPtr[nCount++] = feedInMat[innerIdx];
+					for(int sinLoop = 0; sinLoop <times; sinLoop++){
+						for(int innerIdx = i; innerIdx < i + loopSize; ++innerIdx){
+							outMatDataPtr[nCount++] = feedInMatDataPtr[innerIdx];
 						}
 					}
 				}
@@ -262,13 +262,13 @@ namespace SunshineFrame {
 				}
 			}
 			tmp_In.reshape(inShape);
-			std::vector<int> in.vecShape();
-			std::vector<int>vecFinalShape{shape.begin(), shape.end()};
+			//std::vector<int> in.vecShape();
+			//std::vector<int>vecFinalShape{shape.begin(), shape.end()};
 			int loopCount = 0;
 			std::pair<bool,Algebra::CMatrix>out = funcExpandForSingleAxis(tmp_In,vecFinalShape);
 			while(true){
 				if(!out.first)break;
-				out  = funcExpandForSingleAxis(out, vecFinalShape);
+				out  = funcExpandForSingleAxis(out.second, vecFinalShape);
 				if(loopCount++ >= vecFinalShape.size())throw std::runtime_error("Finite loop: something wrong in while funcexpandForSingleAxis...");
 			}
 			return out.second;
