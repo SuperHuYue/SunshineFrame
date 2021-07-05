@@ -115,7 +115,7 @@ namespace SunshineFrame {
 			*/
 			static CMatrix genMatByBroadcastRule(const CMatrix& in, const std::list<int>& shape);
 
-			//变轴操作：将原先属于from轴号的内容转换到to轴号中，和reshape单纯的变标签是不同的
+			//变轴操作：将原先属于from轴号的内容转换到to轴号中，和reshape单纯的变标签是不同的(目前此方法很慢，慎重使用，亟待优化---william)
 			//ex:假设原先尺寸为[5,3,2] 进行axisFrom=1,axisTo=0则尺寸变为[5,2,3],与reshape不同的地方在于原先[2,1,3]的数据变换了内存位置，现在等同于[2,3,1]中的数据 
 			static CMatrix change_axis(const CMatrix& enter, const int& axisFrom, const int& axisTo);
 			//根据内存中的个数判定对应矩阵中的index

@@ -961,12 +961,6 @@ namespace SunshineFrame {
 			}
 			return true;
 		}
-
-
-
-
-
-
 	}
 
 }
