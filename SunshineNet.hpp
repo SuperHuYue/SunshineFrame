@@ -20,8 +20,6 @@ namespace SunshineFrame {
 			return m_lossLayer[id];
 		}
 
-
-
 		void frameShowAllData() {
 			for (auto i : m_layer) {
 				for (auto j : i.second) {

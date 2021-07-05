@@ -250,6 +250,13 @@ namespace SunshineFrame {
 			inline int getLossID() {
 				return m_iLossID;
 			}
+			inline void setLearningRate(const Algebra::MatrixDataType& lr) {
+				m_layerLearningRate = lr;
+			}
+			inline Algebra::MatrixDataType getLearningRate() {
+				return m_layerLearningRate;
+			}
+			
 		public:
 			//由于m_front2backMat， m_back2frontMat需要通过指针进行访问，所以无法放入protected中
 			Algebra::CMatrix m_front2backMat;//前向传播矩阵(用于传入后续layer的数据，使用forwardMove计算得出 ) eg: y=w1*x1 + w0 * x0 中的由y组成的矩阵, 数据使用行排列方式,多个数据列堆叠

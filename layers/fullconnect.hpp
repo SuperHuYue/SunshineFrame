@@ -18,14 +18,6 @@ namespace SunshineFrame {
 				m_biasMat = Algebra::CMatrix::ones({shape.front(), 1});
 				m_weightMat.random_normalize(0, 1);
 				m_biasMat.random_normalize(0, 1);
-				/*		
-						m_backUpdateMat = m_weightMat;
-						m_backUpdateBiasMat = Algebra::CMatrix::ones({ shape.back(), 1 }) * m_layerLearningRate;
-						m_biasMat = m_backUpdateBiasMat;
-						//初始化随机种子
-						m_weightMat.random_normalize(0, 1);
-						m_biasMat.random_normalize(0, 1);
-					*/
 			};
 			~FullyConnectLayer(){};
 			void weightMatFeed( std::list<Algebra::MatrixDataType> data)
@@ -81,8 +73,15 @@ namespace SunshineFrame {
 			};
 			void showWeight() override{
 				SunshineBaseLayer::showWeight();
+				std::cout << "------------------weight---------------\n";
 				m_weightMat.print();
+				std::cout << "------------------bias---------------\n";
 				m_biasMat.print();
+				std::cout << "------------------updateWeightMat---------------\n";
+				m_backUpdateMat.print();
+				std::cout << "------------------updateBiasMat---------------\n";
+				m_backUpdateBiasMat.print();
+
 			}
 
 			void forwardMove(const Algebra::CMatrix &feedIn) override

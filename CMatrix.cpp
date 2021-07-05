@@ -126,7 +126,7 @@ namespace SunshineFrame {
 			if (m_listShape.size() != 2) { cerr << "Fail: Not Support Dim bigger than two shape..." << endl; return *this; }
 			CMatrix output = change_axis(*this, 1, 0);
 			output.CalAxisCarry();
-			return output;
+			return std::move(output);
 			//const int& a = m_listShape.front();
 			//const int& b = m_listShape.back();
 			//assert(m_ptrData != nullptr);
@@ -528,21 +528,17 @@ namespace SunshineFrame {
 		{
 			return *this = *this * rhs;
 		}
+		//严格相等，shape和内容都会进行检查，（1，1，5，4）和（5，1）同样不等
 		bool CMatrix::operator==(const CMatrix& rhs) const{
-			std::list<int> out_shape;
-			bool ok = CMatrix::broadcastRule((*this).m_listShape, rhs.m_listShape, out_shape);
-			CMatrix tmpThis = *this;
-			CMatrix tmpRhs = rhs;
-			if (ok) {
-				tmpThis = CMatrix::genMatByBroadcastRule(tmpThis, out_shape);
-				tmpRhs = CMatrix::genMatByBroadcastRule(tmpRhs, out_shape);
-				for (int i = 0; i < tmpThis.m_nTotalSize; ++i) {
-					if (tmpThis.getdataptr()[i] != tmpRhs.getdataptr()[i])return false;
-				}
-				return true;
+			if (m_ndim != rhs.m_ndim)return false;
+			if (m_nTotalSize != rhs.m_nTotalSize)return false;
+			auto rhsDataPtr = rhs.getdataptr();
+			for (int i = 0; i < m_nTotalSize; ++i) {
+				if (m_ptrData[i] != rhsDataPtr[i])return false;
 			}
-			return false;
+			return true;
 		}
+	
 
 
 
@@ -665,10 +661,10 @@ namespace SunshineFrame {
 			//高维支持
 			auto rhsVecShape =  rhsOut.vecShape();
 			auto lhsVecShape = lhsOut.vecShape();
-			int rhsVecRowIdx = rhsVecShape.size() - 2;
-			int rhsVecColIdx = rhsVecShape.size() - 1;
-			int lhsVecRowIdx = lhsVecShape.size() - 2;
-			int lhsvecColIdx = lhsVecShape.size() - 1;
+			const int rhsVecRowIdx = rhsVecShape.size() - 2;
+			const int rhsVecColIdx = rhsVecShape.size() - 1;
+			const int lhsVecRowIdx = lhsVecShape.size() - 2;
+			const int lhsvecColIdx = lhsVecShape.size() - 1;
 
 			int times = 1;
 			int lhsFloorSize = lhsVecShape[lhsvecColIdx] * lhsVecShape[lhsVecRowIdx];
@@ -690,13 +686,12 @@ namespace SunshineFrame {
 			CMatrix outMat(outShape);
 			auto outMatDataPtr = outMat.getdataptr();
 			int count = 0;
-			int data = 0;
+			MatrixDataType data = 0;
 			for (int i = 0; i < times; ++i) {
-				for (int or = 0; or < lhsVecShape[lhsVecRowIdx]; ++or ) {
+				for (int or = 0; or < lhsVecShape[lhsVecRowIdx]; ++ or ) {
 					for (int oc = 0; oc < rhsVecShape[rhsVecColIdx]; ++oc) {
 						data = 0;
 						for (int innerLoop = 0; innerLoop < lhsVecShape[lhsvecColIdx]; ++innerLoop) {
-							//此处可以加速
 							int left_data_idx = i * lhsFloorSize + or *lhsVecShape[lhsvecColIdx] + innerLoop;
 							int right_data_idx = i * rhsFloorSize + oc + innerLoop * rhsVecShape[rhsVecColIdx];
 							data += lhsDataPtr[left_data_idx] * rhsDataPtr[right_data_idx];
@@ -705,78 +700,9 @@ namespace SunshineFrame {
 					}
 				}
 			}
+
 			return std::move(outMat);
 			
-
-
-			////////////////////////////////////////////////////////////////////////////////
-			//高维支持
-			//int tep_count = 1;
-			//int times = 1;//开辟内存倍数
-			//int single_mul_size_out = 1;//单个矩阵乘法输出需要偏移的大小
-			//int single_mul_size_rhs = 1;//单个矩阵乘法rhsOut需要偏移的大小
-			//int single_mul_size_lhs = 1;//单个矩阵乘法lhsOut需要偏移的大小
-			//list<int> out_shape;//eg:[6;7;4] * [6;4;5]====>[6;7;5]
-			//auto it_rhs = rhsOut.m_listShape.rbegin();
-			//int two_dim_row = 1;
-			//int two_dim_col = 1;
-			//for (auto it_lhs = lhsOut.m_listShape.rbegin(); it_lhs != lhsOut.m_listShape.rend(); ++it_lhs,++it_rhs,++tep_count)
-			//{
-			//	if (tep_count == 1) { 
-			//		out_shape.push_front(*it_rhs);
-			//		two_dim_col = *it_rhs;
-			//		single_mul_size_out *= *it_rhs;
-			//		single_mul_size_lhs *= *it_lhs;
-			//		single_mul_size_rhs *= *it_rhs;
-			//	}
-			//	else if (tep_count == 2) {
-			//		out_shape.push_front(*it_lhs);
-			//		two_dim_row = *it_lhs;
-			//		single_mul_size_out *= *it_lhs;
-			//		single_mul_size_lhs *= *it_lhs;
-			//		single_mul_size_rhs *= *it_rhs;
-			//	}
-			//	else {
-			//		out_shape.push_front(*it_rhs);
-			//	}
-			//}
-			//times = lhsOut.m_nTotalSize / single_mul_size_lhs;
-
-			//CMatrix outMatrix(out_shape);
-			//LONGLONG outtotalsize = outMatrix.gettotalsize();
-			//LONGLONG lhstotalsize = lhsOut.gettotalsize();
-			//LONGLONG rhstotalsize = rhsOut.gettotalsize();
-			//auto ptr_out = outMatrix.getdataptr();
-			//auto ptr_lhs = lhsOut.getdataptr();
-			//auto ptr_rhs = rhsOut.getdataptr();
-
-			//int feed_col = lhsOut.m_listShape.back();		
-			//for (int i = 0; i < times; i++)
-			//{
-			//	for (int index_row = 0; index_row < two_dim_row; ++index_row)
-			//	{
-			//		for (int index_col = 0; index_col < two_dim_col; index_col++)
-			//		{
-			//			//进行计算
-			//			MatrixDataType tep_total = 0;
-			//			assert(i * (size_t)single_mul_size_out + (size_t)index_row * outMatrix.m_listShape.back() + index_col < outtotalsize);//out越界控制
-			//			for (int j = 0; j < lhsOut.m_listShape.back(); ++j)
-			//			{
-			//				
-			//				assert(i * (size_t)single_mul_size_lhs + (size_t)index_row * lhsOut.m_listShape.back() + j < lhstotalsize);//lhsOut越界控制
-			//				assert(i * (size_t)single_mul_size_rhs + (size_t)j * rhsOut.m_listShape.back() + index_col < rhstotalsize);//rhsOut越界控制
-			//				Algebra::MatrixDataType a = ptr_lhs[i * single_mul_size_lhs + (size_t)index_row * lhsOut.m_listShape.back() + j];
-			//				Algebra::MatrixDataType b = ptr_rhs[i * single_mul_size_rhs + (size_t)j * rhsOut.m_listShape.back() + index_col];
-			//				tep_total +=
-			//					ptr_lhs[i * single_mul_size_lhs + (size_t)index_row * lhsOut.m_listShape.back() + j] *
-			//					ptr_rhs[i * single_mul_size_rhs + (size_t)j * rhsOut.m_listShape.back() + index_col];
-			//			}
-			//			ptr_out[i * single_mul_size_out + (size_t)index_row * outMatrix.m_listShape.back() + index_col] = tep_total;
-			//		}
-
-			//	}
-			//}
-			//return outMatrix;
 		}
 
 		/*
@@ -927,63 +853,6 @@ namespace SunshineFrame {
 				outMatDataPtr[offset] = enterMatDataPtr[i];
 			}
 			return std::move(outMat);
-			////加速
-			//if (from == to) {
-			//	return enter;
-			//}
-			//int max_axis_num = enter.m_ndim - 1;
-			//assert(max_axis_num >= from && max_axis_num >= to && from >= 0 && to >= 0);
-			//list<int> enter_cache = enter.m_listShape;
-			//{
-			//	int tep_count = 0;
-			//	int a_from = 0;
-			//	int b_to = 0;
-			//	auto a_idx = enter_cache.rbegin();
-			//	auto b_idx = enter_cache.rbegin();
-			//	for (auto it = enter_cache.rbegin(); it != enter_cache.rend(); ++it, ++tep_count)
-			//	{
-			//		if (tep_count == from) {
-			//			a_from = *it;
-			//			a_idx = it;
-			//		}
-			//		if (tep_count == to) {
-			//			b_to = *it;
-			//			b_idx = it;
-			//		}
-			//	}
-			//	*a_idx = b_to;
-			//	*b_idx = a_from;
-			//}
-			//CMatrix output(enter_cache);
-
-			//list<int> pos;
-			//for (int i = 0; i < enter.m_nTotalSize; ++i)
-			//{
-			//	list<int>tep_from = matPosfromsize(enter, i);
-			//	MatrixDataType ori_data = enter.m_ptrData[i];
-			//	int axis_count = 0;
-			//	int from_axis_data = 0;
-			//	int to_axis_data = 0;
-			//	auto it_from_idx = tep_from.rbegin();
-			//	auto it_to_idx = tep_from.rbegin();
-			//	for (auto it = tep_from.rbegin(); it != tep_from.rend(); ++it, ++axis_count)
-			//	{
-			//		if (axis_count == from) {
-			//			from_axis_data = *it;
-			//			it_from_idx = it;
-			//		}
-			//		if (axis_count == to) {
-			//			to_axis_data = *it;
-			//			it_to_idx = it;
-			//		}
-			//	}
-			//	*it_from_idx = to_axis_data;
-			//	*it_to_idx = from_axis_data;		
-			//	MatrixDataType* tar_pos_data = output.getPosDataPtr(tep_from);
-			//	*tar_pos_data = ori_data;
-			//}
-			////output.reshape(enter_cache);
-			//return output;
 		}
 
 		void CMatrix::easy_changeshape(std::list<int> shape)
