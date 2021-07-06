@@ -538,7 +538,17 @@ namespace SunshineFrame {
 			}
 			return true;
 		}
-	
+		//严格小于，shape和内容必须都满足
+		bool CMatrix::operator<=(const CMatrix& rhs)const 
+		{
+			if (m_ndim != rhs.m_ndim)return false;
+			if (m_nTotalSize != rhs.m_nTotalSize)return false;
+			auto rhsDataPtr = rhs.getdataptr();
+			for (int i = 0; i < m_nTotalSize; ++i) {
+				if (m_ptrData[i] > rhsDataPtr[i])return false;
+			}
+			return true;
+		}
 
 
 

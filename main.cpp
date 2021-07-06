@@ -2,7 +2,7 @@
 #include <memory>
 #include <list>
 #include <thread>
-#ifdef WIN32
+#ifdef _MSC_VER
 	#include <filesystem>
 #else
 #endif
@@ -84,13 +84,17 @@ TEST(LAYERTEST, fc)
 				std::map<int, SunshineFrame::Algebra::CMatrix> mapTar;
 				mapTar[id] = target;
 				frame.train(feedData, mapTar);
-				//frame.getLossLayer(id)->m_front2backMat.print();
 				//frame.frameShowAllData();
 				using namespace std::chrono_literals;
-				std::this_thread::sleep_for(0.01s);
-				if (count >= 1000)break;
+				//std::this_thread::sleep_for(0.01s);
+				if (count >= 800)break;
 				count++;
 			}
+			SunshineFrame::Algebra::CMatrix right{ 1,1 };
+			right.matrixFeed({ 0.001 });
+			auto ww = frame.getLossLayer(id)->m_front2backMat;
+			EXPECT_LE( frame.getLossLayer(id)->m_front2backMat, right);
+
 			SunshineFrame::Algebra::CMatrix testData({ 3,1 });
 			testData.matrixFeed(std::list<SunshineFrame::Algebra::MatrixDataType>{ 5,1,2 });
 			frame.predict(testData);

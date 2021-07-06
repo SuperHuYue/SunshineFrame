@@ -46,6 +46,7 @@ namespace SunshineFrame {
 			~CMatrix();
 			CMatrix(const CMatrix& cpy);
 			CMatrix& operator=(const CMatrix& rhs);
+			bool operator<=(const CMatrix& rhs)const;
 			CMatrix operator*(const CMatrix& rhs)const;
 			CMatrix operator+(const CMatrix& rhs);
 			CMatrix operator-(const CMatrix& rhs);
