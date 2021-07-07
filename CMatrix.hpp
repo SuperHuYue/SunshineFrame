@@ -39,7 +39,7 @@ namespace SunshineFrame {
 			*
 			*/
 			CMatrix() :CMatrix({ 1,1 }) {};
-			CMatrix::CMatrix(const std::initializer_list<int>::iterator begin, const std::initializer_list<int>::iterator end);
+			//CMatrix::CMatrix(const std::initializer_list<int>::iterator begin, const std::initializer_list<int>::iterator end);
 			CMatrix(const std::list<int>& shape);
 			CMatrix(const std::vector<int>& shape);
 			CMatrix(const std::initializer_list<int>& shape);
@@ -141,7 +141,7 @@ namespace SunshineFrame {
 			std::map<int, int>m_mapAxisCarryOver;
 		//	double* m_ptrData;//数据指针，可以通过getdataptr直接进行操作，需要谨慎
 			std::shared_ptr<MatrixDataType[]> m_ptrData;
-			
+
 			int m_nTotalSize;//总共所占据的空间
 			int m_ndim;//数据维数
 		};

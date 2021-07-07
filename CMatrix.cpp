@@ -6,6 +6,7 @@
 #include <assert.h>
 #include <initializer_list>
 #include <iomanip>
+#include <algorithm>
 namespace SunshineFrame {
 	namespace Algebra {
 		using namespace std;
@@ -844,6 +845,25 @@ namespace SunshineFrame {
 
 		CMatrix CMatrix::change_axis(const CMatrix & enter, const int& from, const int& to)
 		{
+
+
+	/*		if (from == to) { return enter; };
+			int maxAxis = from > to ? from : to;
+			if (maxAxis > enter.m_ndim)throw std::runtime_error("change_Axis: axis bigger than enter dim..");
+			auto vecEnterShape = enter.vecShape();
+			int tmpCache = vecEnterShape[from];
+			vecEnterShape[from] = vecEnterShape[to];
+			vecEnterShape[to] = tmpCache;
+			Algebra::CMatrix outMat(vecEnterShape);
+			int nTotalSize = 0;
+			auto  funcSin = [](const std::vector<int>& in, const int& nowIdx) {
+
+			};*/
+
+
+
+
+			////½ÏÂý
 			if (from == to) { return enter; };
 			int maxAxis = from > to ? from : to;
 			if (maxAxis > enter.m_ndim)throw std::runtime_error("change_Axis: axis bigger than enter dim..");
@@ -863,6 +883,7 @@ namespace SunshineFrame {
 				outMatDataPtr[offset] = enterMatDataPtr[i];
 			}
 			return std::move(outMat);
+			
 		}
 
 		void CMatrix::easy_changeshape(std::list<int> shape)
