@@ -116,15 +116,22 @@ namespace SunshineFrame {
 			*/
 			static CMatrix genMatByBroadcastRule(const CMatrix& in, const std::list<int>& shape);
 
-			//变轴操作：将原先属于from轴号的内容转换到to轴号中，和reshape单纯的变标签是不同的(目前此方法很慢，慎重使用，亟待优化---william)
+			//变轴操作：将原先属于from轴号的内容转换到to轴号中，和reshape单纯的变标签是不同的(目前此方法很慢，不要使用)
 			//ex:假设原先尺寸为[5,3,2] 进行axisFrom=1,axisTo=0则尺寸变为[5,2,3],与reshape不同的地方在于原先[2,1,3]的数据变换了内存位置，现在等同于[2,3,1]中的数据 
 			static CMatrix change_axis(const CMatrix& enter, const int& axisFrom, const int& axisTo);
+
+			//变轴操作加速版，且可以满足多轴同时变换 
+			//变轴操作:与上面的慢速版功能一直同时加入允许多轴同时变化,map中每一个对代表轴x像另外一个轴移动
+			//eg：假设原先尺寸为[1,2,3,4,5,6,7]  fromto[0] = 5; fromto[1] = 6 则变换后尺寸为[6,7,3,4,5,1,2]， 内存位置重新定义，axis轴号参参看顶头注释
+			static CMatrix change_axis(const CMatrix& enter, const std::map<int, int>& fromTo);
+
+
 			//根据内存中的个数判定对应矩阵中的index
-			//size:开辟空间的第几个元素
+			//size:开辟空间的第几个元素,速度慢慎用
 			static std::list<int> matPosfromsize(const CMatrix& enter, const int& size);
-			//根据pos 指示的位置返回内存距离首地址的偏移量: eg: pos=(1,2)  在3*3 的矩阵中将会返回5
+			//根据pos 指示的位置返回内存距离首地址的偏移量: eg: pos=(1,2)  在3*3 的矩阵中将会返回5，速度慢慎用
 			static int matSizefrompos(const CMatrix& enter, const std::list<int>& pos);
-			//根据pos 指示的位置返回内存距离首地址的偏移量: eg: pos=(1,2)  在3*3 的矩阵中将会返回5
+			//根据pos 指示的位置返回内存距离首地址的偏移量: eg: pos=(1,2)  在3*3 的矩阵中将会返回5，速度慢慎用
 			static int matSizefrompos(const CMatrix& enter, const std::vector<int>& pos);
 			/* 取均值操作
 			* 对axis对应的轴号取进行取均值的操作
@@ -134,6 +141,7 @@ namespace SunshineFrame {
 
 		private:
 			inline void constructHelper(const std::list<int>& shape);
+			static void changeAxisInner(const CMatrix& in, CMatrix& out,const std::vector<int>& inShape, const std::vector<int>&outShape, std::map<int,int>&fromTo, const int& nowAxis, int& outIdx, const int& nowInOffset);
 			void easy_changeshape(std::list<int> shape);//change shape and the m_ndim 
 			bool cekIdxOk(std::list<int>pos);//check index reasonable
 			std::list<int> m_listShape;//矩阵的尺寸,需通过reshape更改

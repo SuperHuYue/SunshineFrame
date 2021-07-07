@@ -34,6 +34,26 @@ TEST(CMATRIX, transposition) {
 	c1.matrixFeed({1,2,3,4,5,6});
 	EXPECT_EQ(b1 ,c1);
 
+	SunshineFrame::Algebra::CMatrix a2({ 3,1,2 });
+	a2.matrixFeed({ 1,2,3,4,5,6 });
+	auto b2 = a2.T();
+	SunshineFrame::Algebra::CMatrix c2({ 2,1,3 });
+	c2.matrixFeed({1,3,5,2,4,6});
+	EXPECT_EQ(b2, c2);
+
+	SunshineFrame::Algebra::CMatrix a3({ 3,2,2 });
+	a3.matrixFeed({ 1,2,3,4,5,6,7,8,9,10,11,12 });
+	auto b3 = a3.T();
+	SunshineFrame::Algebra::CMatrix c3({ 2,2,3 });
+	c3.matrixFeed({1,5,9,3,7,11,2,6,10,4,8,12});
+	EXPECT_EQ(b3, c3);
+
+	SunshineFrame::Algebra::CMatrix a4({ 1,3,2,2 });
+	a4.matrixFeed({ 1,2,3,4,5,6,7,8,9,10,11,12 });
+	auto b4 = a4.T();
+	SunshineFrame::Algebra::CMatrix c4({ 2,2,3,1});
+	c4.matrixFeed({ 1,5,9,3,7,11,2,6,10,4,8,12 });
+	EXPECT_EQ(b4, c4);
 }
 
 TEST(CMATRIX, matmul) {

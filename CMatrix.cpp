@@ -7,6 +7,7 @@
 #include <initializer_list>
 #include <iomanip>
 #include <algorithm>
+#include <map>
 namespace SunshineFrame {
 	namespace Algebra {
 		using namespace std;
@@ -80,7 +81,6 @@ namespace SunshineFrame {
 				total_size *= *it_shape;
 				it_shape++;
 			}
-
 		}
 
 		void CMatrix::zeros()
@@ -124,8 +124,11 @@ namespace SunshineFrame {
 
 		CMatrix CMatrix::T()const
 		{
-			if (m_listShape.size() != 2) { cerr << "Fail: Not Support Dim bigger than two shape..." << endl; return *this; }
-			CMatrix output = change_axis(*this, 1, 0);
+			std::map<int, int> changeMap;
+			for (int i = 0; i < std::floor(m_listShape.size() / 2); ++i) {
+				changeMap[i] = m_listShape.size() - i - 1;
+			}
+			CMatrix output = change_axis(*this, changeMap );
 			output.CalAxisCarry();
 			return std::move(output);
 			//const int& a = m_listShape.front();
@@ -535,6 +538,8 @@ namespace SunshineFrame {
 			if (m_nTotalSize != rhs.m_nTotalSize)return false;
 			auto rhsDataPtr = rhs.getdataptr();
 			for (int i = 0; i < m_nTotalSize; ++i) {
+				auto a = m_ptrData[i];
+				auto b = rhsDataPtr[i];
 				if (m_ptrData[i] != rhsDataPtr[i])return false;
 			}
 			return true;
@@ -842,28 +847,67 @@ namespace SunshineFrame {
 			return out;
 		}
 
+		CMatrix CMatrix::change_axis(const CMatrix& enter, const std::map<int, int>&fromTo) {
+			int maxAxis = 0;
+			std::map<int, int >toFrom;
+			std::map<int, int>valueCheck;
+			for (auto i : fromTo) {
+				if (i.first == i.second) { throw std::runtime_error("change_axis map: some key:Value pair equal..."); }
+				int innerMax = i.first > i.second ? i.first : i.second;
+				if (innerMax > maxAxis)maxAxis = innerMax;
+				if (maxAxis >= enter.m_ndim)throw std::runtime_error("change_Axis: axis bigger than enter dim..");
+				if (valueCheck.find(i.second) != valueCheck.end())throw std::runtime_error("change_axis map: duplicate value...");
+				valueCheck[i.second] = 1;
+				//外部axis与changeAxisInner内部的循环标识是不一样的，需要进行转换
+				toFrom[i.first ] = i.second;
+				toFrom[i.second ] = i.first;
+			}
+			auto vecEnterShape = enter.vecShape();
+			//获得交换后的矩阵尺寸
+			std::vector<int> outShape = vecEnterShape;
+			for (auto i : fromTo) {
+				int tmpCache = outShape[i.second];
+				outShape[i.second] = outShape[i.first];
+				outShape[i.first] = tmpCache;
+			}
+			Algebra::CMatrix outMat(outShape);
+			int outIdx = 0;
+			changeAxisInner(enter, outMat, vecEnterShape, outShape, toFrom, 0, outIdx, 0);
+			return std::move(outMat);
+		}
+
+		void CMatrix::changeAxisInner(const CMatrix& in,CMatrix& out, const vector<int>& inShape, const vector<int>& outShape, std::map<int, int>& ToFrom, const int& nowAxis,
+			int& outIdx,const int& nowInOffset)
+		{
+			int tmpInOffset = nowInOffset;
+			//m_mapAxisCarryOver 中axis定义与外层循环的nowAxis是反向的
+			int tmpAxis = in.m_ndim - nowAxis - 1;
+			if (nowAxis >= in.m_ndim)return;
+			for (int i = 0; i < outShape[nowAxis]; ++i) {
+				if (nowAxis == in.m_ndim - 1) {
+					out.m_ptrData[outIdx++] = in.m_ptrData[tmpInOffset];
+					if (ToFrom.find(tmpAxis) != ToFrom.end()) {
+					    tmpInOffset += in.m_mapAxisCarryOver.at(ToFrom[tmpAxis]);
+					}
+					else
+					{
+						tmpInOffset += in.m_mapAxisCarryOver.at(tmpAxis);
+					}
+					continue;
+				}
+				if (ToFrom.find(tmpAxis) != ToFrom.end()) {
+					if (i != 0)tmpInOffset += in.m_mapAxisCarryOver.at(ToFrom[tmpAxis]);
+				}
+				else
+				{
+					if (i != 0)tmpInOffset += in.m_mapAxisCarryOver.at(tmpAxis);
+				}
+				changeAxisInner(in, out, inShape, outShape, ToFrom, nowAxis + 1, outIdx, tmpInOffset);
+			}
+		}
 
 		CMatrix CMatrix::change_axis(const CMatrix & enter, const int& from, const int& to)
 		{
-
-
-	/*		if (from == to) { return enter; };
-			int maxAxis = from > to ? from : to;
-			if (maxAxis > enter.m_ndim)throw std::runtime_error("change_Axis: axis bigger than enter dim..");
-			auto vecEnterShape = enter.vecShape();
-			int tmpCache = vecEnterShape[from];
-			vecEnterShape[from] = vecEnterShape[to];
-			vecEnterShape[to] = tmpCache;
-			Algebra::CMatrix outMat(vecEnterShape);
-			int nTotalSize = 0;
-			auto  funcSin = [](const std::vector<int>& in, const int& nowIdx) {
-
-			};*/
-
-
-
-
-			////较慢
 			if (from == to) { return enter; };
 			int maxAxis = from > to ? from : to;
 			if (maxAxis > enter.m_ndim)throw std::runtime_error("change_Axis: axis bigger than enter dim..");
